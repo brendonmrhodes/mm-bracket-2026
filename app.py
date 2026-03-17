@@ -434,12 +434,13 @@ st.divider()
 # ══════════════════════════════════════════════════════════════════════════════
 # TABS
 # ══════════════════════════════════════════════════════════════════════════════
-tab_odds, tab_bracket, tab_matchup, tab_pool, tab_dna, tab_model = st.tabs([
+tab_odds, tab_bracket, tab_matchup, tab_pool, tab_dna, tab_upset, tab_model = st.tabs([
     "Championship Odds",
     "Full Bracket",
     "Matchup Explorer",
     "Pool Strategy",
     "🧬 Championship DNA",
+    "🎯 Upset Picker",
     "Model Insights",
 ])
 
@@ -1298,7 +1299,7 @@ with tab_pool:
 
     st.dataframe(
         full_tbl.sort_values("Champ EV", ascending=False)
-               .style.applymap(color_ev, subset=["F4 EV","NCG EV","Champ EV"]),
+               .style.map(color_ev, subset=["F4 EV","NCG EV","Champ EV"]),
         use_container_width=True, height=480,
     )
 
@@ -1544,6 +1545,40 @@ with tab_dna:
   </div>
 </div>""", unsafe_allow_html=True)
 
+    # ── "Meets All Criteria" summary ─────────────────────────────────────────
+    all_pass_sets = [set(cr["passing"]) for cr in checklist_rows]
+    if all_pass_sets:
+        meets_all = sorted(all_pass_sets[0].intersection(*all_pass_sets[1:]))
+    else:
+        meets_all = []
+    if meets_all:
+        badges = "".join(
+            f'<span style="display:inline-block;background:{BLUE};color:white;'
+            f'font-size:0.82rem;font-weight:700;border-radius:20px;'
+            f'padding:4px 14px;margin:4px 4px;">{t}</span>'
+            for t in meets_all
+        )
+        st.markdown(f"""
+<div style="background:linear-gradient(135deg,{BLUE},{DARK_BLUE});border-radius:12px;
+            padding:18px 22px;margin:12px 0;">
+  <div style="font-size:0.7rem;font-weight:800;color:rgba(255,255,255,0.7);
+              text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">
+    ✅ Meets All {len(checklist_rows)} Championship DNA Criteria
+  </div>
+  <div>{badges}</div>
+</div>""", unsafe_allow_html=True)
+    else:
+        st.markdown(f"""
+<div style="background:#fff7ed;border:1px solid {ORANGE};border-radius:10px;
+            padding:14px 18px;margin:12px 0;">
+  <div style="font-size:0.85rem;font-weight:700;color:{ORANGE};">
+    ⚠️ No team meets all {len(checklist_rows)} criteria — upsets always happen.
+  </div>
+  <div style="font-size:0.78rem;color:#666;margin-top:4px;">
+    UConn's 7-seed title in 2014 cleared only 5 of the 8 thresholds.
+  </div>
+</div>""", unsafe_allow_html=True)
+
     # ── Section 3: Efficiency Scatter ────────────────────────────────────────
     st.markdown(f'<div class="stitle" style="font-size:1.05rem;margin-top:16px;">The Champion Zone: Efficiency vs Elo</div>',
                 unsafe_allow_html=True)
@@ -1608,10 +1643,10 @@ with tab_dna:
         ))
 
     fig_sc.update_layout(
-        xaxis=dict(title="Adjusted Efficiency Margin (KenPom)", gridcolor="#f0f0f0",
-                   titlefont=dict(size=11)),
-        yaxis=dict(title="Pre-Tournament Elo Rating", gridcolor="#f0f0f0",
-                   titlefont=dict(size=11)),
+        xaxis=dict(title=dict(text="Adjusted Efficiency Margin (KenPom)", font=dict(size=11)),
+                   gridcolor="#f0f0f0"),
+        yaxis=dict(title=dict(text="Pre-Tournament Elo Rating", font=dict(size=11)),
+                   gridcolor="#f0f0f0"),
         plot_bgcolor="white", paper_bgcolor="white",
         legend=dict(orientation="h", yanchor="bottom", y=-0.22, xanchor="center", x=0.5,
                     font=dict(size=10)),
@@ -1675,11 +1710,236 @@ with tab_dna:
         return ""
 
     styled = (champ_disp.style
-              .applymap(color_adjEM, subset=["AdjEM"])
+              .map(color_adjEM, subset=["AdjEM"])
               .format({"AdjEM": "{:+.1f}", "Avg Margin": "{:+.1f}", "WAB": "{:+.1f}",
                        "BARTHAG": "{:.3f}", "Elo": "{:,}"})
               .set_properties(**{"font-size": "0.82rem"}))
     st.dataframe(styled, use_container_width=True, hide_index=True)
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# TAB 6 — Upset Picker
+# ════════════════════════════════════════════════════════════════════════════
+with tab_upset:
+    st.markdown('<div class="stitle">🎯 Upset Picker</div>', unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="info-banner">
+        The model's best upset candidates for each round and region — ranked by upset probability
+        with a stat-by-stat breakdown of <em>why</em> the lower seed has a chance.
+        Green stats = underdog advantage. Red stats = favorite advantage.
+    </div>""", unsafe_allow_html=True)
+
+    REGIONS = {"W": "East", "X": "South", "Y": "Midwest", "Z": "West"}
+    HISTORICAL_UPSET = {(5,12):38.6,(6,11):44.3,(7,10):37.9,(8,9):50.0,
+                        (4,13):20.5,(3,14):11.4,(2,15):8.0,(1,16):2.3}
+
+    UPSET_STATS = [
+        ("adjEM",           "Efficiency Margin",  True,  "{:+.1f}"),
+        ("adjO",            "Offense (AdjO)",      True,  "{:.1f}"),
+        ("adjD",            "Defense (AdjD)",      False, "{:.1f}"),
+        ("elo_pre_tourney", "Elo Rating",          True,  "{:.0f}"),
+        ("elo_momentum",    "Elo Momentum",        True,  "{:+.0f}"),
+        ("elo_late_winpct", "Late Win%",           True,  "{:.0%}"),
+        ("barthag",         "Power Rating",        True,  "{:.3f}"),
+        ("wab",             "Wins Above Bubble",   True,  "{:+.1f}"),
+        ("AvgScoreDiff",    "Avg Margin",          True,  "{:+.1f}"),
+        ("sos_adjEM",       "Strength of Schedule",True,  "{:.1f}"),
+    ]
+
+    def get_stat(team_id, col):
+        r = stats_df[stats_df["TeamID"] == int(team_id)]
+        if r.empty or col not in r.columns: return None
+        v = r[col].iloc[0]
+        return float(v) if pd.notna(v) else None
+
+    def build_r64_matchups():
+        matchups = []
+        for reg_code, reg_name in REGIONS.items():
+            reg = round_df[round_df["Seed"].str.startswith(reg_code)].copy()
+            seed_to_teams = {}
+            for _, r in reg.iterrows():
+                sn = int(r["SeedNum"])
+                seed_to_teams.setdefault(sn, []).append(r)
+            for s_fav, s_dog in [(1,16),(2,15),(3,14),(4,13),(5,12),(6,11),(7,10),(8,9)]:
+                favs = seed_to_teams.get(s_fav, [])
+                dogs = seed_to_teams.get(s_dog, [])
+                if not favs or not dogs: continue
+                fav = favs[0]; dog = dogs[0]
+                p_dog = win_prob(int(dog["TeamID"]), int(fav["TeamID"]))
+                hist  = HISTORICAL_UPSET.get((s_fav, s_dog), 50.0)
+                matchups.append({
+                    "round": "R64", "region": reg_name, "region_code": reg_code,
+                    "fav_name": fav["TeamName"], "fav_seed": s_fav, "fav_id": int(fav["TeamID"]),
+                    "dog_name": dog["TeamName"], "dog_seed": s_dog, "dog_id": int(dog["TeamID"]),
+                    "p_dog": p_dog, "hist_upset": hist,
+                    "value": round(p_dog * 100 / hist, 2) if hist > 0 else 1.0,
+                })
+        return matchups
+
+    def build_r32_matchups():
+        """Project R32 upsets: best-seed opponent vs next-round opponents from model."""
+        matchups = []
+        for reg_code, reg_name in REGIONS.items():
+            reg = round_df[round_df["Seed"].str.startswith(reg_code)].copy()
+            seed_to_teams = {}
+            for _, r in reg.iterrows():
+                seed_to_teams.setdefault(int(r["SeedNum"]), []).append(r)
+            # R32 pairings after R64: winners of (1v16) vs (8v9), (5v12) vs (4v13), (6v11) vs (3v14), (2v15) vs (7v10)
+            r32_pairs = [
+                ((1,16),(8,9)),   # bottom of bracket
+                ((5,12),(4,13)),  # 4/5 line
+                ((6,11),(3,14)),  # 3/6 line
+                ((2,15),(7,10)),  # top of bracket
+            ]
+            for (s1a, s1b), (s2a, s2b) in r32_pairs:
+                # Most likely survivor from each first-round game
+                t1_pool = [(seed_to_teams.get(s1a,[]) or [None])[0],
+                           (seed_to_teams.get(s1b,[]) or [None])[0]]
+                t2_pool = [(seed_to_teams.get(s2a,[]) or [None])[0],
+                           (seed_to_teams.get(s2b,[]) or [None])[0]]
+                t1_pool = [t for t in t1_pool if t is not None]
+                t2_pool = [t for t in t2_pool if t is not None]
+                if len(t1_pool) < 2 or len(t2_pool) < 2: continue
+                # Determine favourite by R64 win prob
+                p_t1a = win_prob(int(t1_pool[0]["TeamID"]), int(t1_pool[1]["TeamID"]))
+                fav1  = t1_pool[0] if p_t1a >= 0.5 else t1_pool[1]
+                dog1  = t1_pool[1] if p_t1a >= 0.5 else t1_pool[0]
+                p_t2a = win_prob(int(t2_pool[0]["TeamID"]), int(t2_pool[1]["TeamID"]))
+                fav2  = t2_pool[0] if p_t2a >= 0.5 else t2_pool[1]
+                dog2  = t2_pool[1] if p_t2a >= 0.5 else t2_pool[0]
+                # R32 upset = lower seed beating higher seed
+                for (fav, dog) in [(fav1, fav2), (fav2, fav1)]:
+                    if int(fav["SeedNum"]) >= int(dog["SeedNum"]): continue
+                    p_dog = win_prob(int(dog["TeamID"]), int(fav["TeamID"]))
+                    if p_dog < 0.15: continue  # skip near-impossible
+                    matchups.append({
+                        "round": "R32 (projected)", "region": reg_name, "region_code": reg_code,
+                        "fav_name": fav["TeamName"], "fav_seed": int(fav["SeedNum"]),
+                        "fav_id": int(fav["TeamID"]),
+                        "dog_name": dog["TeamName"], "dog_seed": int(dog["SeedNum"]),
+                        "dog_id": int(dog["TeamID"]),
+                        "p_dog": p_dog, "hist_upset": 35.0, "value": p_dog * 100 / 35.0,
+                    })
+        return matchups
+
+    r64_matchups = build_r64_matchups()
+    r32_matchups = build_r32_matchups()
+    all_matchups = r64_matchups + r32_matchups
+
+    # ── Filters ──────────────────────────────────────────────────────────────
+    col_f1, col_f2, col_f3 = st.columns(3)
+    with col_f1:
+        round_filter = st.selectbox("Round", ["All Rounds", "R64 (First Round)", "R32 (Projected)"],
+                                    key="upset_round")
+    with col_f2:
+        region_filter = st.selectbox("Region", ["All Regions"] + list(REGIONS.values()),
+                                     key="upset_region")
+    with col_f3:
+        sort_by = st.selectbox("Sort by", ["Upset Probability", "Model vs History (Value)"],
+                               key="upset_sort")
+
+    filtered = [m for m in all_matchups
+                if (round_filter == "All Rounds" or
+                    (round_filter == "R64 (First Round)" and m["round"] == "R64") or
+                    (round_filter == "R32 (Projected)" and "R32" in m["round"]))
+                and (region_filter == "All Regions" or m["region"] == region_filter)]
+
+    if sort_by == "Upset Probability":
+        filtered.sort(key=lambda x: x["p_dog"], reverse=True)
+    else:
+        filtered.sort(key=lambda x: x["value"], reverse=True)
+
+    if not filtered:
+        st.info("No matchups found for selected filters.")
+    else:
+        st.markdown(f"**{len(filtered)} matchups** — showing top upset candidates first")
+
+    for m in filtered[:20]:  # cap at 20 cards
+        p_pct    = m["p_dog"] * 100
+        hist_pct = m["hist_upset"]
+        value    = m["value"]
+        val_color = GREEN if value >= 1.2 else ORANGE if value >= 0.8 else "#ef4444"
+        val_label = "Value Pick ▲" if value >= 1.2 else ("Lean ▶" if value >= 0.8 else "Fade ▼")
+        bar_pct  = min(int(p_pct), 100)
+
+        # Stat comparison
+        stat_html = ""
+        dog_edge_count = 0
+        for skey, slabel, higher_better, fmt in UPSET_STATS:
+            fv = get_stat(m["fav_id"], skey)
+            dv = get_stat(m["dog_id"], skey)
+            if fv is None or dv is None: continue
+            dog_wins = (dv > fv) if higher_better else (dv < fv)
+            diff = dv - fv
+            if dog_wins:
+                dog_edge_count += 1
+            arrow = "▲" if dog_wins else "▼"
+            c = GREEN if dog_wins else "#ef4444"
+            try:
+                fv_str = fmt.format(fv)
+                dv_str = fmt.format(dv)
+            except Exception:
+                fv_str = f"{fv:.2f}"; dv_str = f"{dv:.2f}"
+            stat_html += (
+                f'<div style="display:flex;align-items:center;gap:6px;padding:3px 0;'
+                f'border-bottom:1px solid #f5f5f5;">'
+                f'<span style="min-width:130px;font-size:0.71rem;color:#666;">{slabel}</span>'
+                f'<span style="min-width:55px;text-align:right;font-size:0.73rem;'
+                f'font-weight:{"700" if not dog_wins else "400"};color:{"#333" if not dog_wins else "#bbb"};">{fv_str}</span>'
+                f'<span style="font-size:0.7rem;color:{c};font-weight:800;margin:0 4px;">{arrow}</span>'
+                f'<span style="min-width:55px;font-size:0.73rem;'
+                f'font-weight:{"700" if dog_wins else "400"};color:{c if dog_wins else "#bbb"};">{dv_str}</span>'
+                f'</div>'
+            )
+
+        # Expand/collapse via st.expander
+        with st.expander(
+            f"**{m['dog_name']}** ({m['dog_seed']}-seed) over **{m['fav_name']}** "
+            f"({m['fav_seed']}-seed)  ·  {m['region']}  ·  {p_pct:.1f}% chance",
+            expanded=(p_pct >= 35)
+        ):
+            c1, c2, c3 = st.columns([2, 2, 1])
+            with c1:
+                st.markdown(f"""
+<div style="text-align:center;padding:10px;">
+  <div style="font-size:0.65rem;color:#999;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">
+    Upset Probability</div>
+  <div style="font-size:2rem;font-weight:900;color:{BLUE};">{p_pct:.1f}%</div>
+  <div style="height:6px;background:#f0f0f0;border-radius:3px;margin:4px 0;overflow:hidden;">
+    <div style="height:6px;width:{bar_pct}%;background:{BLUE};border-radius:3px;"></div>
+  </div>
+  <div style="font-size:0.7rem;color:#888;">Historical avg: {hist_pct:.1f}%</div>
+</div>""", unsafe_allow_html=True)
+            with c2:
+                st.markdown(f"""
+<div style="text-align:center;padding:10px;">
+  <div style="font-size:0.65rem;color:#999;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">
+    Model vs History</div>
+  <div style="font-size:1.8rem;font-weight:900;color:{val_color};">{value:.2f}x</div>
+  <div style="font-size:0.78rem;font-weight:700;color:{val_color};">{val_label}</div>
+  <div style="font-size:0.68rem;color:#888;margin-top:2px;">{m['round']} · {m['region']}</div>
+</div>""", unsafe_allow_html=True)
+            with c3:
+                st.markdown(f"""
+<div style="text-align:center;padding:10px;">
+  <div style="font-size:0.65rem;color:#999;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">
+    Dog Edges</div>
+  <div style="font-size:2rem;font-weight:900;color:{GREEN if dog_edge_count >= 5 else ORANGE};">
+    {dog_edge_count}/{len(UPSET_STATS)}</div>
+  <div style="font-size:0.7rem;color:#888;">stats favoring<br>the underdog</div>
+</div>""", unsafe_allow_html=True)
+
+            st.markdown(f"""
+<div style="background:#fafafa;border-radius:8px;padding:12px 14px;margin-top:4px;">
+  <div style="font-size:0.68rem;font-weight:800;color:#999;text-transform:uppercase;
+              letter-spacing:0.5px;margin-bottom:6px;">
+    Stat Comparison &nbsp;
+    <span style="color:{BLUE}">← {m['fav_name']} ({m['fav_seed']})</span>
+    &nbsp;&nbsp;
+    <span style="color:{GREEN}">→ {m['dog_name']} ({m['dog_seed']})</span>
+  </div>
+  {stat_html}
+</div>""", unsafe_allow_html=True)
 
 
 # ── Footer ────────────────────────────────────────────────────────────────────
