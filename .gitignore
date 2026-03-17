@@ -21,3 +21,4 @@ __pycache__/
 
 # Jupyter
 .ipynb_checkpoints/
+environment.yml
