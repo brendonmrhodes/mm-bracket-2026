@@ -1,5 +1,5 @@
 """
-Feature Engineering Pipeline v2
+Feature Engineering Pipeline v3
 Integrates all data sources into a single team-season feature matrix:
 
   Source                      Features
@@ -7,9 +7,12 @@ Integrates all data sources into a single team-season feature matrix:
   Kaggle box scores           Four Factors (eFG%, TO%, OR%, FTR), PPP,
                               recency-weighted season averages
   KenPom (2002-2026)          AdjEM, AdjO, AdjD, AdjT, Luck, SOS metrics
+  KenPom extended             Four Factors, Height/Experience, Misc Stats
+                              (scraped via kenpom_extended — if available)
   Torvik T-Rank (2008-2026)   BARTHAG, WAB, qual_barthag, elite_sos
   Massey Ordinals             Composite rank from 10 rating systems
   Elo (1985-2026)             Pre-tournament Elo rating
+  Conf Tournament             Wins, champion flag, finalist flag
   Seeds                       Seed number, region
 """
 
@@ -35,6 +38,8 @@ massey    = pd.read_csv(DATA_DIR / "MMasseyOrdinals.csv")
 kenpom    = pd.read_parquet(RAW_DIR / "kenpom_all.parquet")
 torvik    = pd.read_parquet(RAW_DIR / "torvik_slim.parquet")
 elo       = pd.read_parquet(RAW_DIR / "elo_momentum.parquet")
+conf_tourn   = pd.read_parquet(RAW_DIR / "conf_tourney_features.parquet")
+tourn_hist   = pd.read_parquet(RAW_DIR / "tourney_history_features.parquet")
 name_map  = build_name_map()
 
 print(f"  Box scores    : {len(rsd):,} games ({rsd['Season'].min()}–{rsd['Season'].max()})")
@@ -42,6 +47,27 @@ print(f"  Tournament    : {len(tourney):,} games")
 print(f"  KenPom        : {len(kenpom):,} rows ({kenpom['season'].min()}–{kenpom['season'].max()})")
 print(f"  Torvik        : {len(torvik):,} rows ({torvik['season'].min()}–{torvik['season'].max()})")
 print(f"  Elo           : {len(elo):,} rows")
+print(f"  Conf tourney  : {len(conf_tourn):,} rows")
+print(f"  Tourney hist  : {len(tourn_hist):,} rows")
+
+# KenPom extended — optional, load if available
+kp_four_factors = None
+kp_height_exp   = None
+kp_misc_stats   = None
+for fname, label, attr in [
+    ("kenpom_four_factors.parquet", "Four Factors",     "kp_four_factors"),
+    ("kenpom_height_exp.parquet",   "Height/Exp",       "kp_height_exp"),
+    ("kenpom_misc_stats.parquet",   "Misc stats",       "kp_misc_stats"),
+]:
+    p = RAW_DIR / fname
+    if p.exists():
+        df = pd.read_parquet(p)
+        print(f"  KenPom {label:12s}: {len(df):,} rows — {list(df.columns[:6])}")
+        if attr == "kp_four_factors": kp_four_factors = df
+        elif attr == "kp_height_exp": kp_height_exp   = df
+        elif attr == "kp_misc_stats": kp_misc_stats   = df
+    else:
+        print(f"  KenPom {label:12s}: not available (run fetch_kenpom_extended.py)")
 
 
 # ── 2. Box-score Four Factors (from Kaggle game logs) ─────────────────────────
@@ -175,14 +201,85 @@ seeds["Region"]  = seeds["Seed"].str[0]
 
 # ── 7. Merge everything ───────────────────────────────────────────────────────
 print("\nMerging all features...")
+
+# Conference tournament features
+ct_cols = ["Season","TeamID","conf_tourney_wins","conf_tourney_winpct",
+           "conf_tourney_champion","conf_tourney_finalist"]
+conf_tourn_clean = conf_tourn[ct_cols].copy()
+
+th_cols = ["Season","TeamID",
+           "tourney_appearances","tourney_recent_appear","tourney_avg_seed",
+           "tourney_best_round","tourney_recent_best","tourney_win_rate",
+           "tourney_r32_rate","tourney_s16_rate","tourney_e8_rate",
+           "tourney_f4_rate","tourney_ncg_rate","tourney_champ_rate"]
+tourn_hist_clean = tourn_hist[th_cols].astype({"Season": int, "TeamID": int})
+
 features = (
     box_features
-    .merge(massey_pivot,   on=["Season","TeamID"], how="left")
-    .merge(kenpom_clean,   on=["Season","TeamID"], how="left")
-    .merge(torvik_clean,   on=["Season","TeamID"], how="left")
+    .merge(massey_pivot,      on=["Season","TeamID"], how="left")
+    .merge(kenpom_clean,      on=["Season","TeamID"], how="left")
+    .merge(torvik_clean,      on=["Season","TeamID"], how="left")
     .merge(elo.rename(columns={"season":"Season"}), on=["Season","TeamID"], how="left")
+    .merge(conf_tourn_clean,  on=["Season","TeamID"], how="left")
+    .merge(tourn_hist_clean,  on=["Season","TeamID"], how="left")
     .merge(seeds[["Season","TeamID","SeedNum","Region"]], on=["Season","TeamID"], how="left")
 )
+
+# Fill conf tourney features for teams that didn't participate (auto-bids that skipped)
+features["conf_tourney_wins"]      = features["conf_tourney_wins"].fillna(0)
+features["conf_tourney_winpct"]    = features["conf_tourney_winpct"].fillna(0)
+features["conf_tourney_champion"]  = features["conf_tourney_champion"].fillna(0)
+features["conf_tourney_finalist"]  = features["conf_tourney_finalist"].fillna(0)
+
+# Fill tourney history features for first-time participants
+for col in th_cols[2:]:  # skip Season, TeamID
+    if col in features.columns:
+        fill = 17.0 if col == "tourney_avg_seed" else 0.0
+        features[col] = features[col].fillna(fill)
+
+# KenPom extended — merge if available
+def _merge_kenpom_ext(features, df, prefix, key_cols):
+    """Match by season + team name → TeamID, then merge."""
+    df = df.copy()
+    # Find team name column (case-insensitive)
+    team_col = next((c for c in df.columns if c.lower() == "team"), None)
+    if team_col:
+        df["TeamID"] = df[team_col].apply(lambda n: lookup_team_id(n, name_map))
+    else:
+        df["TeamID"] = None
+    if "TeamID" not in df.columns or df["TeamID"].isna().all():
+        return features
+    df = df.rename(columns={"season": "Season"})
+    df["TeamID"] = df["TeamID"].dropna().astype(int)
+    df = df.dropna(subset=["TeamID"])
+    # Drop garbage columns (col_N pattern, Rk, Rank, W-L, Conf)
+    import re as _re
+    drop_pats = {"Rk", "Rank", "W-L", "Conf", "conf"}
+    df = df[[c for c in df.columns
+             if c not in drop_pats and not _re.match(r'^col_\d+$', c)]]
+    # Coerce all non-identity columns to float (handles StringDtype from parquet)
+    skip_ids = {"Season", "TeamID", team_col or "Team"}
+    for c in df.columns:
+        if c not in skip_ids:
+            df[c] = pd.to_numeric(df[c], errors="coerce")
+    # Drop columns that are entirely NaN after coercion
+    df = df.dropna(axis=1, how="all")
+    # Rename numeric columns to avoid collisions
+    rename_map = {c: f"{prefix}_{c}" for c in df.columns
+                  if c not in skip_ids and not c.startswith(prefix)}
+    df = df.rename(columns=rename_map)
+    keep = ["Season","TeamID"] + [c for c in df.columns if c.startswith(f"{prefix}_")]
+    return features.merge(df[keep], on=["Season","TeamID"], how="left")
+
+if kp_four_factors is not None:
+    print("  Merging KenPom Four Factors...")
+    features = _merge_kenpom_ext(features, kp_four_factors, "kp_ff", [])
+if kp_height_exp is not None:
+    print("  Merging KenPom Height/Experience...")
+    features = _merge_kenpom_ext(features, kp_height_exp, "kp_ht", [])
+if kp_misc_stats is not None:
+    print("  Merging KenPom Misc Stats...")
+    features = _merge_kenpom_ext(features, kp_misc_stats, "kp_ms", [])
 
 features["SeedNum"]  = features["SeedNum"].fillna(17)
 features["InTourney"]= (features["SeedNum"] <= 16).astype(int)
@@ -203,9 +300,14 @@ print(f"  Saved → data/team_season_features.parquet")
 kp_coverage  = features["adjEM"].notna().mean()
 tv_coverage  = features["barthag"].notna().mean()
 elo_coverage = (features["elo_pre_tourney"] != elo_mean).mean()
+ct_coverage  = (features["conf_tourney_wins"] > 0).mean()
 print(f"\n  KenPom coverage  : {kp_coverage:.1%}")
 print(f"  Torvik coverage  : {tv_coverage:.1%}")
 print(f"  Elo coverage     : {elo_coverage:.1%}")
+print(f"  Conf tourney     : {ct_coverage:.1%} played in conf tourney")
+for ext_col in ["kp_ff_eFG%", "kp_ht_AHgt.", "kp_ms_3PA%"]:
+    if ext_col in features.columns:
+        print(f"  {ext_col:20s}: {features[ext_col].notna().mean():.1%}")
 
 
 # ── 8. Build matchup training dataset ─────────────────────────────────────────

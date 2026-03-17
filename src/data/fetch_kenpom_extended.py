@@ -24,18 +24,18 @@ import time
 import random
 import pandas as pd
 from pathlib import Path
-from playwright.sync_api import sync_playwright
 
 import sys
 sys.path.insert(0, str(Path(__file__).parent))
-from kenpom_session import make_firefox_session, verify_session, fetch_page, parse_table, _human_pause
+from kenpom_session import make_requests_session, verify_session, fetch_page, parse_table, _human_pause
 
 RAW_DIR    = Path(__file__).resolve().parent.parent.parent / "data" / "raw"
 RAW_DIR.mkdir(parents=True, exist_ok=True)
 
-DELAY       = 6.0   # base seconds between pages — do not lower
-JITTER      = 3.0   # ± random seconds added to each delay
-SECTION_GAP = 20.0  # extra pause between different page types
+DELAY       = 8.0   # base seconds between pages — do not lower
+JITTER      = 6.0   # max extra random seconds (uniform 0–JITTER)
+SECTION_GAP = 25.0  # extra pause between different page types
+WARMUP_DELAY = 3.0  # brief pause after homepage warm-up visit
 
 # ─── Page definitions ─────────────────────────────────────────────────────────
 # Each entry: (key, url_template, table_selector, output_file)
@@ -82,12 +82,12 @@ PAGES = {
 HCA_PAGE = ("hca.php", "table", "kenpom_hca.parquet", "Home court advantage ratings")
 
 
-def scrape_page_by_year(page, url_template: str, selector: str,
+def scrape_page_by_year(session, url_template: str, selector: str,
                         start: int, end: int, label: str) -> list[pd.DataFrame]:
     frames = []
     for year in range(start, end + 1):
         url = f"https://kenpom.com/{url_template.format(year=year)}"
-        html = fetch_page(page, url, selector)
+        html = fetch_page(session, url)
         if not html:
             print(f"    [{year}] failed")
             time.sleep(DELAY)
@@ -104,11 +104,29 @@ def scrape_page_by_year(page, url_template: str, selector: str,
         # Strip seed suffixes from team names
         team_col = next((c for c in df.columns if c.lower() in ("team", "name")), None)
         if team_col:
-            df[team_col] = df[team_col].str.replace(r"\s+\d+$", "", regex=True).str.strip()
+            df[team_col] = df[team_col].str.replace(r"\s*\d+$", "", regex=True).str.strip()
+
+        # Deduplicate column names NOW (before concat) to avoid InvalidIndexError
+        seen: dict = {}
+        new_cols = []
+        for col in df.columns:
+            if col in seen:
+                seen[col] += 1
+                new_cols.append(f"{col}_{seen[col]}")
+            else:
+                seen[col] = 0
+                new_cols.append(col)
+        df.columns = new_cols
+
+        # Sanity check: skip wildly malformed years (e.g. 2007 height page = 6798 cols)
+        expected_cols = frames[0].shape[1] if frames else None
+        if expected_cols and df.shape[1] > expected_cols * 3:
+            print(f"    [{year}] SKIPPED — abnormal column count {df.shape[1]} vs expected ~{expected_cols}")
+            continue
 
         frames.append(df)
         print(f"    [{year}] {len(df)} rows, {len(df.columns)} cols")
-        _human_pause(DELAY, JITTER)
+        # Delay is already applied inside fetch_page via polite_get
 
     return frames
 
@@ -121,57 +139,72 @@ def main():
     parser.add_argument("--end",   type=int, default=2026)
     args = parser.parse_args()
 
-    with sync_playwright() as pw:
-        browser, context, page = make_firefox_session(pw)
+    session = make_requests_session()
 
-        print("Verifying KenPom session...")
-        if not verify_session(page):
-            print("ERROR: Session invalid. Log into kenpom.com in Firefox first.")
-            browser.close()
-            return
-        print("  Session OK.\n")
+    print("Verifying KenPom session...")
+    if not verify_session(session):
+        print("ERROR: Session invalid. Log into kenpom.com in Firefox first.")
+        return
+    print("  Session OK.")
 
-        first_section = True
-        for key, (url_tmpl, selector, outfile, description) in PAGES.items():
-            if key not in args.pages:
-                continue
+    # Warm-up: visit the homepage once before diving into data pages,
+    # just like a human would browse the site.
+    print(f"  Warming up (visiting homepage)...")
+    time.sleep(WARMUP_DELAY + random.uniform(0, 2))
+    session.get("https://kenpom.com/index.php", timeout=15)
+    time.sleep(WARMUP_DELAY)
+    print()
 
-            if not first_section:
-                print(f"  [inter-section pause {SECTION_GAP:.0f}s...]")
-                time.sleep(SECTION_GAP)
-            first_section = False
+    first_section = True
+    for key, (url_tmpl, selector, outfile, description) in PAGES.items():
+        if key not in args.pages:
+            continue
 
-            print(f"{'='*55}")
-            print(f"{description}  ({args.start}–{args.end})")
-            print(f"{'='*55}")
+        if not first_section:
+            print(f"  [inter-section pause {SECTION_GAP:.0f}s...]")
+            time.sleep(SECTION_GAP)
+        first_section = False
 
-            frames = scrape_page_by_year(
-                page, url_tmpl, selector, args.start, args.end, key
-            )
+        print(f"{'='*55}")
+        print(f"{description}  ({args.start}–{args.end})")
+        print(f"{'='*55}")
 
-            if frames:
-                combined = pd.concat(frames, ignore_index=True)
-                out = RAW_DIR / outfile
-                combined.to_parquet(out, index=False)
-                print(f"  → Saved {len(combined):,} rows to data/raw/{outfile}")
-                print(f"    Columns: {list(combined.columns[:18])}\n")
-            else:
-                print(f"  No data for {key}\n")
+        frames = scrape_page_by_year(
+            session, url_tmpl, selector, args.start, args.end, key
+        )
 
-        # HCA — single page, no year loop
-        if "hca" in args.pages:
-            print(f"{'='*55}")
-            print("Home court advantage ratings (single page)")
-            print(f"{'='*55}")
-            html = fetch_page(page, "https://kenpom.com/hca.php", "table")
-            if html:
-                df_hca = parse_table(html)
-                if not df_hca.empty:
-                    df_hca.to_parquet(RAW_DIR / "kenpom_hca.parquet", index=False)
-                    print(f"  → Saved {len(df_hca)} rows to data/raw/kenpom_hca.parquet")
-                    print(f"    Columns: {list(df_hca.columns)}\n")
+        if frames:
+            combined = pd.concat(frames, ignore_index=True)
+            # Deduplicate column names (KenPom multi-level headers can repeat)
+            seen = {}
+            new_cols = []
+            for col in combined.columns:
+                if col in seen:
+                    seen[col] += 1
+                    new_cols.append(f"{col}_{seen[col]}")
+                else:
+                    seen[col] = 0
+                    new_cols.append(col)
+            combined.columns = new_cols
+            out = RAW_DIR / outfile
+            combined.to_parquet(out, index=False)
+            print(f"  → Saved {len(combined):,} rows to data/raw/{outfile}")
+            print(f"    Columns: {list(combined.columns[:18])}\n")
+        else:
+            print(f"  No data for {key}\n")
 
-        browser.close()
+    # HCA — single page, no year loop
+    if "hca" in args.pages:
+        print(f"{'='*55}")
+        print("Home court advantage ratings (single page)")
+        print(f"{'='*55}")
+        html = fetch_page(session, "https://kenpom.com/hca.php")
+        if html:
+            df_hca = parse_table(html)
+            if not df_hca.empty:
+                df_hca.to_parquet(RAW_DIR / "kenpom_hca.parquet", index=False)
+                print(f"  → Saved {len(df_hca)} rows to data/raw/kenpom_hca.parquet")
+                print(f"    Columns: {list(df_hca.columns)}\n")
 
     print("Extended KenPom scrape complete.")
 
