@@ -1,0 +1,23 @@
+# Large data files
+data/raw/
+data/*.parquet
+march-machine-learning-mania-2026/
+
+# Model pickle files (too large for GitHub)
+outputs/*.pkl
+outputs/*.parquet
+
+# Logs
+outputs/tuning_log.txt
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# macOS
+.DS_Store
+
+# Jupyter
+.ipynb_checkpoints/
