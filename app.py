@@ -271,7 +271,10 @@ def load_data():
                             header=None, names=["feature","importance"])
     fi_lgb   = pd.read_csv(BASE / "outputs" / "feature_importance_lgb.csv",
                             header=None, names=["feature","importance"])
-    stats_df = pd.read_csv(BASE / "outputs" / "team_stats_2026.csv")
+    stats_df     = pd.read_csv(BASE / "outputs" / "team_stats_2026.csv")
+    champ_hist   = pd.read_csv(BASE / "outputs" / "champion_history.csv")
+    upset_df     = pd.read_csv(BASE / "outputs" / "upset_rates.csv")
+    champ_prof   = pd.read_csv(BASE / "outputs" / "champion_profile.csv")
 
     for fi in [fi_xgb, fi_lgb]:
         fi.drop(fi[fi["feature"].isna() | (fi["feature"] == "")].index, inplace=True)
@@ -284,9 +287,9 @@ def load_data():
         _, t1, t2 = row["ID"].split("_")
         prob_lookup[(int(t1), int(t2))] = float(row["Pred"])
 
-    return round_df, fi_xgb, fi_lgb, prob_lookup, stats_df
+    return round_df, fi_xgb, fi_lgb, prob_lookup, stats_df, champ_hist, upset_df, champ_prof
 
-round_df, fi_xgb, fi_lgb, prob_lookup, stats_df = load_data()
+round_df, fi_xgb, fi_lgb, prob_lookup, stats_df, champ_hist, upset_df, champ_prof = load_data()
 
 round_df["SeedDisplay"] = round_df["Seed"].apply(fmt_seed)
 round_df["SeedNum"]     = pd.to_numeric(round_df["SeedNum"], errors="coerce").fillna(17).astype(int)
@@ -431,11 +434,12 @@ st.divider()
 # ══════════════════════════════════════════════════════════════════════════════
 # TABS
 # ══════════════════════════════════════════════════════════════════════════════
-tab_odds, tab_bracket, tab_matchup, tab_pool, tab_model = st.tabs([
+tab_odds, tab_bracket, tab_matchup, tab_pool, tab_dna, tab_model = st.tabs([
     "Championship Odds",
     "Full Bracket",
     "Matchup Explorer",
     "Pool Strategy",
+    "🧬 Championship DNA",
     "Model Insights",
 ])
 
@@ -974,7 +978,7 @@ with tab_bracket:
                         unsafe_allow_html=True)
             champ_name = id_to_name.get(champ_id, "TBD") if champ_id else "TBD"
             champ_seed = id_to_seeddisplay.get(champ_id, "?") if champ_id else "?"
-            gator_style = f"color:{ORANGE};" if champ_name == "Florida" else f"color:{BLUE};"
+            gator_style = f"color:{ORANGE};" if champ_name == "Florida" else "color:white;"
             st.markdown(f"""
 <div style="text-align:center;margin-top:10px;padding:10px;
             background:linear-gradient(135deg,{BLUE},{DARK_BLUE});
@@ -1307,10 +1311,11 @@ with tab_model:
                 unsafe_allow_html=True)
     st.markdown(f"""
     <div class="info-banner">
-        A weighted ensemble of <b>XGBoost</b> (45%), <b>LightGBM</b> (45%), and
-        <b>Logistic Regression</b> (10%), trained on every NCAA tournament game since 2002
-        using walk-forward cross-validation (no future data leakage). 153 features per matchup
-        spanning efficiency ratings, Elo momentum, strength of schedule, and shot quality.
+        A weighted ensemble of <b>XGBoost</b> (47%), <b>LightGBM</b> (48%), and
+        <b>Logistic Regression</b> (5%), trained on every NCAA tournament game since 2002
+        using walk-forward cross-validation (no future data leakage). 292 features per matchup
+        spanning efficiency ratings, Elo momentum, strength of schedule, shot quality,
+        height &amp; experience, conference tournament performance, and historical tournament DNA.
     </div>""", unsafe_allow_html=True)
 
     def fi_chart(df, title, color):
@@ -1359,6 +1364,322 @@ with tab_model:
         Kaggle NCAA box scores (1985–2026) · Massey Ordinals from 10 rating systems ·
         FiveThirtyEight-style Elo with margin-of-victory multiplier and recency momentum.
     </div>""", unsafe_allow_html=True)
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# TAB 5 — Championship DNA
+# ════════════════════════════════════════════════════════════════════════════
+with tab_dna:
+    st.markdown('<div class="stitle">🧬 Championship DNA</div>', unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="info-banner">
+        What separates champions from the field? Every NCAA champion since 2003 analyzed
+        across efficiency, power ratings, Elo momentum, and historical upset patterns.
+        See how 2026 contenders stack up against the champion blueprint.
+    </div>""", unsafe_allow_html=True)
+
+    # ── Merge stats with round probs ─────────────────────────────────────────
+    dna_df = (round_df[["TeamID","TeamName","SeedNum","prob_Champion","prob_F4","prob_NCG"]]
+              .merge(stats_df.drop(columns=["TeamName"], errors="ignore"),
+                     on="TeamID", how="left"))
+
+    DNA_STATS = [
+        ("adjEM",          "Adj. Efficiency Margin",  True,  32.24, "%+.1f"),
+        ("adjO",           "Offensive Efficiency",    True,  121.60, "%.1f"),
+        ("adjD",           "Defensive Efficiency",    False, 91.10, "%.1f"),
+        ("barthag",        "Power Rating (Torvik)",   True,  0.970, "%.3f"),
+        ("elo_pre_tourney","Pre-Tourney Elo",          True,  2013.78, "%.0f"),
+        ("AvgScoreDiff",   "Avg Score Margin",        True,  14.61, "+.1f"),
+        ("wab",            "Wins Above Bubble",       True,  8.97, "+.1f"),
+    ]
+
+    # ── Section 1: Champion DNA Radar ────────────────────────────────────────
+    st.markdown(f'<div class="stitle" style="font-size:1.05rem;margin-top:8px;">Radar: How Contenders Compare to the Champion Blueprint</div>',
+                unsafe_allow_html=True)
+    st.caption("Radar dimensions are percentile-ranked against all 2026 tournament teams. "
+               "The dashed line shows the median champion's percentile.")
+
+    radar_cols = ["adjEM", "adjO", "adjD", "barthag", "elo_pre_tourney", "wab"]
+    radar_labels = ["Efficiency\nMargin", "Offense", "Defense\n(lower=better)",
+                    "Power\nRating", "Elo\nRating", "Wins Above\nBubble"]
+
+    # Compute percentile of each 2026 team on each stat (vs all 68 teams)
+    pct_df = dna_df[["TeamID", "TeamName"] + radar_cols].copy()
+    for col in radar_cols:
+        vals = pct_df[col].fillna(pct_df[col].median())
+        if col == "adjD":  # lower is better
+            pct_df[f"{col}_pct"] = (vals.rank(ascending=True) / len(vals) * 100)
+        else:
+            pct_df[f"{col}_pct"] = (vals.rank(ascending=False) / len(vals) * 100)
+            # Flip: rank 1 = 100th pct
+            pct_df[f"{col}_pct"] = 100 - pct_df[f"{col}_pct"] + (100 / len(vals))
+
+    # Champion median profile (compute against all 2026 teams using champ_hist medians)
+    champ_medians = {row["stat"]: row["median"]
+                     for _, row in champ_prof.iterrows() if row["stat"] in radar_cols}
+    champ_radar = []
+    for col in radar_cols:
+        med = champ_medians.get(col)
+        if med is None:
+            champ_radar.append(50)
+            continue
+        vals = dna_df[col].fillna(dna_df[col].median())
+        if col == "adjD":
+            pct = (vals > med).mean() * 100  # fraction of teams with worse (higher) defense
+        else:
+            pct = (vals < med).mean() * 100  # fraction of teams below champ median
+        champ_radar.append(round(pct, 1))
+
+    # Pick top contenders by model champ%
+    top_teams = dna_df.nlargest(4, "prob_Champion")["TeamName"].tolist()
+    team_colors = [BLUE, ORANGE, "#16a34a", "#9333ea"]
+
+    fig_radar = go.Figure()
+    theta = radar_labels + [radar_labels[0]]  # close the loop
+
+    # Champion blueprint zone (shaded)
+    cr = champ_radar + [champ_radar[0]]
+    fig_radar.add_trace(go.Scatterpolar(
+        r=cr, theta=theta, fill="toself",
+        fillcolor="rgba(250,70,22,0.12)", line=dict(color=ORANGE, dash="dash", width=2),
+        name="Champion Median", mode="lines",
+    ))
+
+    for i, tname in enumerate(top_teams):
+        row = pct_df[pct_df["TeamName"] == tname]
+        if row.empty:
+            continue
+        vals = [float(row[f"{col}_pct"].iloc[0]) for col in radar_cols]
+        vals_closed = vals + [vals[0]]
+        fig_radar.add_trace(go.Scatterpolar(
+            r=vals_closed, theta=theta, fill="toself",
+            fillcolor=f"rgba({int(team_colors[i][1:3],16)},{int(team_colors[i][3:5],16)},{int(team_colors[i][5:7],16)},0.08)",
+            line=dict(color=team_colors[i], width=2.5),
+            name=tname, mode="lines+markers",
+            marker=dict(size=6, color=team_colors[i]),
+        ))
+
+    fig_radar.update_layout(
+        polar=dict(
+            radialaxis=dict(visible=True, range=[0, 100], ticksuffix="th", gridcolor="#e5e7eb",
+                            tickfont=dict(size=9)),
+            angularaxis=dict(tickfont=dict(size=10)),
+            bgcolor="white",
+        ),
+        showlegend=True,
+        legend=dict(orientation="h", yanchor="bottom", y=-0.18, xanchor="center", x=0.5,
+                    font=dict(size=11)),
+        margin=dict(l=60, r=60, t=30, b=60),
+        paper_bgcolor="white",
+        height=440,
+    )
+    st.plotly_chart(fig_radar, use_container_width=True)
+
+    # ── Section 2: Champion DNA Checklist ────────────────────────────────────
+    st.markdown(f'<div class="stitle" style="font-size:1.05rem;margin-top:4px;">Championship DNA Checklist</div>',
+                unsafe_allow_html=True)
+    st.caption("Criteria derived from all champions since 2003. ✅ = team meets the threshold. "
+               "No team is guaranteed — Virginia (2019) was the first 1-seed ever to lose to a 16 before winning it all.")
+
+    champ_thresholds = {
+        "adjEM":           (28.0,  True,  "Adj. Efficiency Margin ≥ 28",   "Only 2 of 22 champions had adjEM < 28"),
+        "adjO":            (119.0, True,  "Offensive Efficiency ≥ 119",    "Outlier: KU 2022 had 119.2"),
+        "adjD":            (93.0,  False, "Defensive Efficiency ≤ 93",     "Virginia 2019 had 89.2 — elite defense wins titles"),
+        "barthag":         (0.945, True,  "Power Rating (Torvik) ≥ 0.945", "UConn 2014 (7-seed) had 0.914 — only exception"),
+        "elo_pre_tourney": (1960,  True,  "Pre-Tourney Elo ≥ 1960",        "UConn 2011 (1924) the only exception below 1960"),
+        "AvgScoreDiff":    (7.0,   True,  "Avg Score Margin ≥ 7.0 pts",    "Every champion since 2003 won by 7+ on average"),
+        "wab":             (4.5,   True,  "Wins Above Bubble ≥ 4.5",       "UConn 2014 (4.8) was the lowest recent champion"),
+        "SeedNum":         (7,     False, "Seed ≤ 7 (no worse than a 7-seed)", "Only one double-digit seed has won — ever"),
+    }
+
+    checklist_rows = []
+    for stat, (thresh, higher_is_better, label, note) in champ_thresholds.items():
+        if stat not in dna_df.columns and stat != "SeedNum":
+            continue
+        col_data = dna_df[stat] if stat in dna_df.columns else dna_df["SeedNum"]
+        if higher_is_better:
+            passing = dna_df[col_data >= thresh]["TeamName"].tolist()
+        else:
+            passing = dna_df[col_data <= thresh]["TeamName"].tolist()
+        # Fraction of historical champions who passed
+        if stat in champ_hist.columns:
+            cv = champ_hist[stat].dropna()
+            if higher_is_better:
+                champ_pass_rate = (cv >= thresh).mean()
+            else:
+                champ_pass_rate = (cv <= thresh).mean()
+        else:
+            champ_pass_rate = 1.0
+        n_pass = len(passing)
+        checklist_rows.append({
+            "label": label, "note": note,
+            "champ_pass_rate": champ_pass_rate,
+            "n_pass": n_pass, "passing": passing,
+        })
+
+    for cr in checklist_rows:
+        rate_bar = int(cr["champ_pass_rate"] * 100)
+        rate_color = GREEN if rate_bar >= 80 else ORANGE if rate_bar >= 60 else "#ef4444"
+        n = cr["n_pass"]
+        teams_str = ", ".join(cr["passing"][:6]) + ("…" if n > 6 else "")
+        st.markdown(f"""
+<div style="background:white;border-radius:10px;padding:14px 18px;margin-bottom:8px;
+            box-shadow:0 1px 6px rgba(0,33,165,0.07);border:1px solid #eaeef8;">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+    <div style="flex:2;">
+      <div style="font-size:0.88rem;font-weight:700;color:#1e1e2e;">{cr['label']}</div>
+      <div style="font-size:0.73rem;color:#888;margin-top:2px;">{cr['note']}</div>
+    </div>
+    <div style="flex:1;text-align:center;">
+      <div style="font-size:0.68rem;color:#999;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">% of Champions</div>
+      <div style="height:6px;background:#f0f0f0;border-radius:3px;margin:4px 0;overflow:hidden;">
+        <div style="height:6px;width:{rate_bar}%;background:{rate_color};border-radius:3px;"></div>
+      </div>
+      <div style="font-size:0.8rem;font-weight:800;color:{rate_color};">{rate_bar}%</div>
+    </div>
+    <div style="flex:2;">
+      <div style="font-size:0.68rem;color:#999;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">{n} team{'s' if n!=1 else ''} qualify</div>
+      <div style="font-size:0.78rem;font-weight:600;color:{BLUE};margin-top:2px;">{teams_str if teams_str else "—"}</div>
+    </div>
+  </div>
+</div>""", unsafe_allow_html=True)
+
+    # ── Section 3: Efficiency Scatter ────────────────────────────────────────
+    st.markdown(f'<div class="stitle" style="font-size:1.05rem;margin-top:16px;">The Champion Zone: Efficiency vs Elo</div>',
+                unsafe_allow_html=True)
+    st.caption("Grey = all 2026 tournament teams  ·  Colored = top contenders  ·  "
+               "Orange zone = where all champions since 2003 have landed.")
+
+    fig_sc = go.Figure()
+
+    # Champion zone shading (bounding box of all historical champions)
+    ch_x = champ_hist["adjEM"].dropna()
+    ch_y = champ_hist["elo_pre_tourney"].dropna()
+    fig_sc.add_shape(type="rect",
+        x0=ch_x.quantile(0.10), x1=ch_x.max() + 1,
+        y0=ch_y.quantile(0.10), y1=ch_y.max() + 10,
+        fillcolor="rgba(250,70,22,0.07)", line=dict(color=ORANGE, width=1.5, dash="dot"),
+    )
+    fig_sc.add_annotation(
+        x=ch_x.quantile(0.10), y=ch_y.max() + 10,
+        text="Champion Zone", showarrow=False,
+        font=dict(size=10, color=ORANGE), xanchor="left", yanchor="bottom",
+    )
+
+    # All 2026 teams (grey)
+    others = dna_df[~dna_df["TeamName"].isin(top_teams)]
+    fig_sc.add_trace(go.Scatter(
+        x=others["adjEM"], y=others["elo_pre_tourney"],
+        mode="markers+text", text=others["SeedNum"].astype(str),
+        textposition="middle center",
+        marker=dict(size=22, color="#d1d5db", line=dict(color="#9ca3af", width=1)),
+        textfont=dict(size=8, color="#555"),
+        name="Field", hovertemplate="<b>%{customdata}</b><br>adjEM: %{x:.1f}<br>Elo: %{y:.0f}<extra></extra>",
+        customdata=others["TeamName"],
+    ))
+
+    # Historical champions (small orange dots)
+    fig_sc.add_trace(go.Scatter(
+        x=champ_hist["adjEM"], y=champ_hist["elo_pre_tourney"],
+        mode="markers",
+        marker=dict(size=9, color=ORANGE, symbol="star", opacity=0.6,
+                    line=dict(color="white", width=1)),
+        name="Past Champions",
+        hovertemplate="<b>%{customdata[0]} %{customdata[1]}</b><br>adjEM: %{x:.1f}<br>Elo: %{y:.0f}<extra></extra>",
+        customdata=list(zip(champ_hist["TeamName"].fillna(""), champ_hist["Season"].astype(str))),
+    ))
+
+    # Top contenders (colored)
+    for i, tname in enumerate(top_teams):
+        row = dna_df[dna_df["TeamName"] == tname]
+        if row.empty:
+            continue
+        sn = int(row["SeedNum"].iloc[0])
+        champ_pct = float(row["prob_Champion"].iloc[0]) * 100
+        fig_sc.add_trace(go.Scatter(
+            x=row["adjEM"], y=row["elo_pre_tourney"],
+            mode="markers+text",
+            text=[f"{sn}"],
+            textposition="middle center",
+            marker=dict(size=32, color=team_colors[i], line=dict(color="white", width=2)),
+            textfont=dict(size=11, color="white", family="Arial Black"),
+            name=f"{tname} ({champ_pct:.1f}%)",
+            hovertemplate=f"<b>{tname}</b><br>adjEM: %{{x:.1f}}<br>Elo: %{{y:.0f}}<br>Champ: {champ_pct:.1f}%<extra></extra>",
+        ))
+
+    fig_sc.update_layout(
+        xaxis=dict(title="Adjusted Efficiency Margin (KenPom)", gridcolor="#f0f0f0",
+                   titlefont=dict(size=11)),
+        yaxis=dict(title="Pre-Tournament Elo Rating", gridcolor="#f0f0f0",
+                   titlefont=dict(size=11)),
+        plot_bgcolor="white", paper_bgcolor="white",
+        legend=dict(orientation="h", yanchor="bottom", y=-0.22, xanchor="center", x=0.5,
+                    font=dict(size=10)),
+        margin=dict(l=50, r=30, t=30, b=80),
+        height=450,
+    )
+    st.plotly_chart(fig_sc, use_container_width=True)
+
+    # ── Section 4: Upset Rates ────────────────────────────────────────────────
+    st.markdown(f'<div class="stitle" style="font-size:1.05rem;margin-top:4px;">Historical Upset Rates by Seed Matchup</div>',
+                unsafe_allow_html=True)
+    st.caption("Based on all NCAA Tournament first and second round games since 2003.")
+
+    upset_sorted = upset_df.sort_values("FavSeed")
+    colors_upset = [GREEN if u < 20 else ORANGE if u < 40 else "#ef4444"
+                    for u in upset_sorted["UpsetPct"]]
+
+    fig_up = go.Figure()
+    fig_up.add_trace(go.Bar(
+        x=upset_sorted["matchup"],
+        y=upset_sorted["UpsetPct"],
+        marker_color=colors_upset,
+        text=[f"{v:.0f}%" for v in upset_sorted["UpsetPct"]],
+        textposition="outside",
+        hovertemplate="<b>%{x}</b><br>Upset rate: %{y:.1f}%<br>Games played: %{customdata}<extra></extra>",
+        customdata=upset_sorted["Games"],
+    ))
+    fig_up.update_layout(
+        xaxis=dict(title="Seed Matchup", tickfont=dict(size=12)),
+        yaxis=dict(title="Upset Rate (%)", range=[0, 60], gridcolor="#f0f0f0"),
+        plot_bgcolor="white", paper_bgcolor="white",
+        margin=dict(l=40, r=20, t=30, b=50),
+        height=320,
+        showlegend=False,
+    )
+    fig_up.add_hline(y=50, line_dash="dot", line_color="#999",
+                     annotation_text="50% (coin flip)", annotation_position="top right",
+                     annotation_font_size=10)
+    st.plotly_chart(fig_up, use_container_width=True)
+
+    # ── Section 5: Past Champions Gallery ────────────────────────────────────
+    st.markdown(f'<div class="stitle" style="font-size:1.05rem;margin-top:4px;">Past Champions Since 2003</div>',
+                unsafe_allow_html=True)
+
+    champ_disp = champ_hist[["Season","TeamName","SeedNum","adjEM","adjO","adjD",
+                              "barthag","elo_pre_tourney","AvgScoreDiff","wab"]].copy()
+    champ_disp = champ_disp.sort_values("Season", ascending=False).reset_index(drop=True)
+    champ_disp.columns = ["Year","Champion","Seed","AdjEM","Off Eff","Def Eff",
+                          "BARTHAG","Elo","Avg Margin","WAB"]
+    champ_disp["Def Eff"] = champ_disp["Def Eff"].round(1)
+    champ_disp["AdjEM"]   = champ_disp["AdjEM"].round(1)
+    champ_disp["BARTHAG"] = champ_disp["BARTHAG"].round(3)
+    champ_disp["Elo"]     = champ_disp["Elo"].round(0).astype(int)
+    champ_disp["Avg Margin"] = champ_disp["Avg Margin"].round(1)
+    champ_disp["WAB"]     = champ_disp["WAB"].round(1)
+
+    def color_adjEM(val):
+        if pd.isna(val): return ""
+        if val >= 32: return f"background-color:{BLUE};color:white;font-weight:bold"
+        if val >= 27: return f"background-color:#dbeafe;color:{BLUE};font-weight:bold"
+        return ""
+
+    styled = (champ_disp.style
+              .applymap(color_adjEM, subset=["AdjEM"])
+              .format({"AdjEM": "{:+.1f}", "Avg Margin": "{:+.1f}", "WAB": "{:+.1f}",
+                       "BARTHAG": "{:.3f}", "Elo": "{:,}"})
+              .set_properties(**{"font-size": "0.82rem"}))
+    st.dataframe(styled, use_container_width=True, hide_index=True)
 
 
 # ── Footer ────────────────────────────────────────────────────────────────────
