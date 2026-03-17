@@ -40,8 +40,11 @@ xgb_model    = bundle["xgb"]
 lgb_model    = bundle["lgb"]
 lr_model     = bundle["lr"]
 feature_cols = bundle["feature_cols"]
-weights      = bundle.get("ensemble_weights", (0.45, 0.45, 0.10))
-w_xgb, w_lgb, w_lr = weights
+weights = bundle.get("ensemble_weights", (0.45, 0.45, 0.10))
+if isinstance(weights, dict):
+    w_xgb, w_lgb, w_lr = weights["xgb"], weights["lgb"], weights["lr"]
+else:
+    w_xgb, w_lgb, w_lr = weights
 print(f"Ensemble weights — XGB: {w_xgb:.2f}  LGB: {w_lgb:.2f}  LR: {w_lr:.2f}\n")
 
 # ── Load features & seeds ──────────────────────────────────────────────────────
@@ -106,7 +109,7 @@ def build_prob_lookup(team_list, feat_map, feature_cols, xgb_m, lgb_m, lr_m, wei
 print("Computing matchup probabilities...")
 prob_lookup = build_prob_lookup(
     team_list, feat_2026, feature_cols,
-    xgb_model, lgb_model, lr_model, weights
+    xgb_model, lgb_model, lr_model, (w_xgb, w_lgb, w_lr)
 )
 
 def win_prob(t1, t2):

@@ -44,8 +44,10 @@ OUT_DIR.mkdir(exist_ok=True)
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 EARLY_STOPPING_ROUNDS = 30   # early-stopping patience for tree models
-# Walk-forward CV starts at this season (need enough historical training data)
-CV_START_SEASON = 2010
+# Walk-forward CV starts at this season.
+# 2015 ensures training sets are 800–1,380 matchups — large enough for tree models
+# to compete fairly (early seasons like 2010 had only ~450 rows, biasing toward LR).
+CV_START_SEASON = 2015
 # Random seed for reproducibility
 SEED = 42
 
@@ -201,12 +203,13 @@ def walk_forward_ensemble(w_xgb: float, w_lgb: float, w_lr: float,
             ],
         )
 
-        # Logistic Regression (trained on full training set, no early stopping)
+        # Logistic Regression — use the same X_t split as tree models
+        # (avoids biasing ensemble weights toward LR by giving it more data)
         lr_model = Pipeline([
             ("scaler", StandardScaler()),
             ("model", LogisticRegression(C=0.1, max_iter=1000, random_state=SEED)),
         ])
-        lr_model.fit(X_tr, y_tr)
+        lr_model.fit(X_t, y_t)
 
         p_xgb = xgb_model.predict_proba(X_te)[:, 1]
         p_lgb = lgb_model.predict_proba(X_te)[:, 1]
@@ -521,7 +524,7 @@ def _collect_cv_preds(xgb_params, lgb_params, w_xgb, w_lgb, w_lr):
             ("scaler", StandardScaler()),
             ("model", LogisticRegression(C=0.1, max_iter=1000, random_state=SEED)),
         ])
-        lr_m.fit(X_tr, y_tr)
+        lr_m.fit(X_t, y_t)
 
         p_xgb = xgb_m.predict_proba(X_te)[:, 1]
         p_lgb = lgb_m.predict_proba(X_te)[:, 1]
