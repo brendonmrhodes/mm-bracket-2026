@@ -439,8 +439,8 @@ tab_odds, tab_bracket, tab_matchup, tab_pool, tab_dna, tab_upset, tab_model = st
     "Full Bracket",
     "Matchup Explorer",
     "Pool Strategy",
-    "🧬 Championship DNA",
-    "🎯 Upset Picker",
+    "Championship DNA",
+    "Upset Picker",
     "Model Insights",
 ])
 
@@ -1371,7 +1371,7 @@ with tab_model:
 # TAB 5 — Championship DNA
 # ════════════════════════════════════════════════════════════════════════════
 with tab_dna:
-    st.markdown('<div class="stitle">🧬 Championship DNA</div>', unsafe_allow_html=True)
+    st.markdown('<div class="stitle">Championship DNA</div>', unsafe_allow_html=True)
     st.markdown(f"""
     <div class="info-banner">
         What separates champions from the field? Every NCAA champion since 2003 analyzed
@@ -1479,7 +1479,7 @@ with tab_dna:
     # ── Section 2: Champion DNA Checklist ────────────────────────────────────
     st.markdown(f'<div class="stitle" style="font-size:1.05rem;margin-top:4px;">Championship DNA Checklist</div>',
                 unsafe_allow_html=True)
-    st.caption("Criteria derived from all champions since 2003. ✅ = team meets the threshold. "
+    st.caption("Criteria derived from all champions since 2003. A check = team meets the threshold. "
                "No team is guaranteed — Virginia (2019) was the first 1-seed ever to lose to a 16 before winning it all.")
 
     champ_thresholds = {
@@ -1563,7 +1563,7 @@ with tab_dna:
             padding:18px 22px;margin:12px 0;">
   <div style="font-size:0.7rem;font-weight:800;color:rgba(255,255,255,0.7);
               text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">
-    ✅ Meets All {len(checklist_rows)} Championship DNA Criteria
+    Meets All {len(checklist_rows)} Championship DNA Criteria
   </div>
   <div>{badges}</div>
 </div>""", unsafe_allow_html=True)
@@ -1572,7 +1572,7 @@ with tab_dna:
 <div style="background:#fff7ed;border:1px solid {ORANGE};border-radius:10px;
             padding:14px 18px;margin:12px 0;">
   <div style="font-size:0.85rem;font-weight:700;color:{ORANGE};">
-    ⚠️ No team meets all {len(checklist_rows)} criteria — upsets always happen.
+    No team meets all {len(checklist_rows)} criteria — upsets always happen.
   </div>
   <div style="font-size:0.78rem;color:#666;margin-top:4px;">
     UConn's 7-seed title in 2014 cleared only 5 of the 8 thresholds.
@@ -1721,7 +1721,7 @@ with tab_dna:
 # TAB 6 — Upset Picker
 # ════════════════════════════════════════════════════════════════════════════
 with tab_upset:
-    st.markdown('<div class="stitle">🎯 Upset Picker</div>', unsafe_allow_html=True)
+    st.markdown('<div class="stitle">Upset Picker</div>', unsafe_allow_html=True)
     st.markdown(f"""
     <div class="info-banner">
         The model's best upset candidates for each round and region — ranked by upset probability
