@@ -209,6 +209,47 @@ st.markdown(f"""
         font-weight: 800 !important;
     }}
 
+    /* ── Full bracket CSS ── */
+    .fb-wrap {{ overflow-x: auto; padding: 4px 0; }}
+    .fb-bracket {{ display: flex; gap: 0; min-width: 900px; }}
+    .fb-col {{ display: flex; flex-direction: column; flex: 1; min-width: 170px; }}
+    .fb-col-hdr {{ font-size: 0.68rem; font-weight: 800; color: {BLUE};
+                  text-transform: uppercase; letter-spacing: 0.8px;
+                  text-align: center; padding: 6px 4px; background: {LIGHT_BG};
+                  border-radius: 6px; margin: 0 2px 6px; }}
+    .fb-slot {{ display: flex; align-items: center; padding: 0 2px; box-sizing: border-box; }}
+    .fb-mc {{ border-radius: 6px; border: 1px solid #eaeef8; overflow: hidden;
+              width: 100%; background: white; box-shadow: 0 1px 4px rgba(0,33,165,0.05); }}
+    .fb-row-w {{ display:flex; align-items:center; gap:5px; padding:4px 7px;
+                 background: #f0fdf4; border-left: 3px solid #16a34a; }}
+    .fb-row-l {{ display:flex; align-items:center; gap:5px; padding:4px 7px;
+                 background: white; border-left: 3px solid transparent;
+                 border-top: 1px solid #f0f2f8; }}
+    .fb-badge-w {{ font-size:0.6rem; font-weight:800; color:white; background:#16a34a;
+                   border-radius:3px; padding:1px 4px; min-width:16px; text-align:center; flex-shrink:0; }}
+    .fb-badge-l {{ font-size:0.6rem; font-weight:700; color:#ccc; background:#f0f0f0;
+                   border-radius:3px; padding:1px 4px; min-width:16px; text-align:center; flex-shrink:0; }}
+    .fb-name-w {{ font-size:0.76rem; font-weight:700; color:#15803d; flex:1; white-space:nowrap;
+                  overflow:hidden; text-overflow:ellipsis; }}
+    .fb-name-w-gator {{ color: {ORANGE} !important; }}
+    .fb-name-l {{ font-size:0.74rem; font-weight:400; color:#bbb; flex:1; white-space:nowrap;
+                  overflow:hidden; text-overflow:ellipsis; }}
+    .fb-prob {{ font-size:0.65rem; font-weight:700; color:#16a34a; white-space:nowrap; }}
+    /* F4/Championship bracket */
+    .ff-section {{ background: {LIGHT_BG}; border-radius: 12px; padding: 16px 20px; margin-top: 20px; }}
+    .ff-game {{ background: white; border-radius: 8px; padding: 10px 14px;
+                box-shadow: 0 1px 6px rgba(0,33,165,0.07); border: 1px solid #eaeef8; }}
+
+    /* ── Key Factors CSS ── */
+    .kf-row {{ display:flex; align-items:center; gap:10px; padding:8px 0;
+               border-bottom: 1px solid #f0f2f8; }}
+    .kf-row:last-child {{ border-bottom: none; }}
+    .kf-label {{ font-size:0.8rem; color:#666; min-width:200px; }}
+    .kf-val {{ font-size:0.82rem; font-weight:700; min-width:60px; text-align:right; }}
+    .kf-bar-wrap {{ flex:1; height:8px; background:#f0f0f0; border-radius:4px; overflow:hidden; }}
+    .kf-bar {{ height:8px; border-radius:4px; }}
+    .kf-edge {{ font-size:0.72rem; font-weight:700; min-width:80px; }}
+
     /* Footer */
     .footer {{
         text-align:center; color:#bbb; font-size:0.77rem;
@@ -222,7 +263,7 @@ st.markdown(f"""
 # ── Data loading ──────────────────────────────────────────────────────────────
 BASE = Path(__file__).parent
 
-@st.cache_data
+@st.cache_data(ttl=0)
 def load_data():
     round_df = pd.read_csv(BASE / "outputs" / "round_probs_2026.csv")
     sub_df   = pd.read_csv(BASE / "outputs" / "submission_2026.csv")
@@ -230,6 +271,7 @@ def load_data():
                             header=None, names=["feature","importance"])
     fi_lgb   = pd.read_csv(BASE / "outputs" / "feature_importance_lgb.csv",
                             header=None, names=["feature","importance"])
+    stats_df = pd.read_csv(BASE / "outputs" / "team_stats_2026.csv")
 
     for fi in [fi_xgb, fi_lgb]:
         fi.drop(fi[fi["feature"].isna() | (fi["feature"] == "")].index, inplace=True)
@@ -242,9 +284,9 @@ def load_data():
         _, t1, t2 = row["ID"].split("_")
         prob_lookup[(int(t1), int(t2))] = float(row["Pred"])
 
-    return round_df, fi_xgb, fi_lgb, prob_lookup
+    return round_df, fi_xgb, fi_lgb, prob_lookup, stats_df
 
-round_df, fi_xgb, fi_lgb, prob_lookup = load_data()
+round_df, fi_xgb, fi_lgb, prob_lookup, stats_df = load_data()
 
 round_df["SeedDisplay"] = round_df["Seed"].apply(fmt_seed)
 round_df["SeedNum"]     = pd.to_numeric(round_df["SeedNum"], errors="coerce").fillna(17).astype(int)
@@ -294,6 +336,18 @@ def feat_label(f):
     return FEAT_LABELS.get(f,
         f.replace("d_","").replace("t1_","").replace("t2_","")
          .replace("_"," ").title())
+
+# ── Key Factor stat labels ─────────────────────────────────────────────────────
+STAT_LABELS = {
+    "elo_pre_tourney": "Elo Rating",
+    "adjEM": "KenPom Efficiency Margin",
+    "adjO": "Offensive Efficiency",
+    "adjD": "Defensive Efficiency (lower=better)",
+    "avg_ScoreDiff": "Avg Score Margin",
+    "WinPct": "Win Percentage",
+    "barthag": "Power Rating (Torvik)",
+    "sos_adjEM": "Strength of Schedule",
+}
 
 # ── Round-specific public pick priors (seed-based, based on historical bracket data) ──
 F4_PRIOR = {
@@ -430,15 +484,26 @@ with tab_odds:
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    # Full table — all rounds
+    # Full table — all rounds with sort controls
     st.markdown('<div class="stitle">All Teams — Round-by-Round Probabilities</div>',
                 unsafe_allow_html=True)
+
+    sort_col_options = ["Champion", "Champ. Game", "Final Four", "Elite 8", "Sweet 16", "Round of 32"]
+    sc1, sc2, _ = st.columns([2, 2, 4])
+    with sc1:
+        sort_col = st.selectbox("Sort by", sort_col_options, key="odds_sort_col")
+    with sc2:
+        sort_dir = st.selectbox("Direction", ["High → Low", "Low → High"], key="odds_sort_dir")
+
     tbl = disp[["SeedDisplay","TeamName",
                 "prob_R32","prob_S16","prob_E8","prob_F4","prob_NCG","prob_Champion"]].copy()
     tbl.columns = ["Seed","Team","Round of 32","Sweet 16","Elite 8",
                    "Final Four","Champ. Game","Champion"]
     for c in tbl.columns[2:]:
         tbl[c] = (tbl[c] * 100).round(1)
+
+    ascending = (sort_dir == "Low → High")
+    tbl = tbl.sort_values(sort_col, ascending=ascending).reset_index(drop=True)
 
     def hl_gator(row):
         s = f"background-color:{BLUE};color:white;font-weight:bold"
@@ -470,11 +535,7 @@ with tab_bracket:
         return p_a * win_prob(id_high, id_a) + (1 - p_a) * win_prob(id_high, id_b)
 
     def matchup_html(id_top, id_bot, ff_id_a=None, ff_id_b=None):
-        """Return HTML for one first-round matchup card.
-        Green border + badge = model's predicted winner. Gray = loser.
-        ff_id_a/ff_id_b set when one slot is a First Four play-in pair.
-        """
-        # Play-in matchup (two teams competing for one slot)
+        """Return HTML for one first-round matchup card."""
         if ff_id_a is not None and ff_id_b is not None:
             p = win_prob(ff_id_a, ff_id_b) * 100
             n_a = id_to_name.get(ff_id_a, "TBD")
@@ -482,7 +543,6 @@ with tab_bracket:
             s_a = id_to_seeddisplay.get(ff_id_a, "?")
             s_b = id_to_seeddisplay.get(ff_id_b, "?")
             a_wins = p >= 50
-            # top is winner
             w_id, l_id, p_w, p_l = (ff_id_a, ff_id_b, p, 100-p) if a_wins else (ff_id_b, ff_id_a, 100-p, p)
             nw = id_to_name.get(w_id,"TBD"); nl = id_to_name.get(l_id,"TBD")
             sw = id_to_seeddisplay.get(w_id,"?"); sl = id_to_seeddisplay.get(l_id,"?")
@@ -549,19 +609,16 @@ with tab_bracket:
             high_code = f"{letter}{str(high_s).zfill(2)}"
 
             if low_code in first_four:
-                # The lower seed slot is a First Four game
                 pair = first_four[low_code]
                 id_a, id_b = pair[0][1], pair[1][1]
                 id_high = seed_to_id.get(high_code)
 
-                # ① Play-in matchup
                 html += f"""
                 <div style="font-size:0.68rem;font-weight:700;color:#aaa;
                     text-transform:uppercase;letter-spacing:0.6px;
                     margin:6px 0 3px 2px;">Play-In Game</div>"""
                 html += matchup_html(None, None, ff_id_a=id_a, ff_id_b=id_b)
 
-                # ② First round: high seed vs likely play-in winner
                 if id_high:
                     p_a = win_prob(id_a, id_b)
                     likely_opp = id_a if p_a >= 0.5 else id_b
@@ -579,7 +636,261 @@ with tab_bracket:
         html += "</div>"
         return html
 
-    # First Four
+    # ── build_predicted_bracket ──────────────────────────────────────────────
+    def build_predicted_bracket():
+        """
+        Returns a dict keyed by region letter, each containing:
+          {
+            'r64':  [(winner_id, loser_id, prob_winner), ...],  # 8 games
+            'r32':  [(winner_id, loser_id, prob_winner), ...],  # 4 games
+            's16':  [(winner_id, loser_id, prob_winner), ...],  # 2 games
+            'e8':   [(winner_id, loser_id, prob_winner), ...],  # 1 game
+            'winner': winner_id
+          }
+        Also returns:
+          'f4':   [(winner_id, loser_id, prob_winner), ...]  # 2 games (W vs X, Y vs Z)
+          'ncg':  [(winner_id, loser_id, prob_winner), ...]  # 1 game
+          'champion': winner_id
+        """
+        SEED_ORDER = [1, 16, 8, 9, 5, 12, 4, 13, 6, 11, 3, 14, 7, 10, 2, 15]
+        bracket_order = [(SEED_ORDER[i], SEED_ORDER[i+1]) for i in range(0, 16, 2)]
+
+        result = {}
+
+        for letter in ["W", "X", "Y", "Z"]:
+            # Resolve First Four — pick winner with win_prob > 0.5
+            resolved = {}  # base_code -> team_id
+            for base_code, pair in first_four.items():
+                if base_code[0] == letter:
+                    id_a, id_b = pair[0][1], pair[1][1]
+                    p = win_prob(id_a, id_b)
+                    resolved[base_code] = id_a if p >= 0.5 else id_b
+
+            # Build 16-team lineup in bracket order
+            teams_16 = []
+            for seed_num in SEED_ORDER:
+                code = f"{letter}{str(seed_num).zfill(2)}"
+                if code in first_four:
+                    # Use resolved First Four winner
+                    teams_16.append(resolved.get(code))
+                else:
+                    teams_16.append(seed_to_id.get(code))
+
+            # Play R64 — 8 matchups
+            r64 = []
+            r32_field = []
+            for i in range(0, 16, 2):
+                t1, t2 = teams_16[i], teams_16[i+1]
+                if t1 is None or t2 is None:
+                    winner = t1 if t2 is None else t2
+                    r64.append((winner, None, 1.0))
+                    r32_field.append(winner)
+                else:
+                    p = win_prob(t1, t2)
+                    if p >= 0.5:
+                        r64.append((t1, t2, p))
+                        r32_field.append(t1)
+                    else:
+                        r64.append((t2, t1, 1-p))
+                        r32_field.append(t2)
+
+            # Play R32 — 4 matchups
+            r32 = []
+            s16_field = []
+            for i in range(0, 8, 2):
+                t1, t2 = r32_field[i], r32_field[i+1]
+                if t1 is None or t2 is None:
+                    winner = t1 if t2 is None else t2
+                    r32.append((winner, None, 1.0))
+                    s16_field.append(winner)
+                else:
+                    p = win_prob(t1, t2)
+                    if p >= 0.5:
+                        r32.append((t1, t2, p))
+                        s16_field.append(t1)
+                    else:
+                        r32.append((t2, t1, 1-p))
+                        s16_field.append(t2)
+
+            # Play S16 — 2 matchups
+            s16 = []
+            e8_field = []
+            for i in range(0, 4, 2):
+                t1, t2 = s16_field[i], s16_field[i+1]
+                if t1 is None or t2 is None:
+                    winner = t1 if t2 is None else t2
+                    s16.append((winner, None, 1.0))
+                    e8_field.append(winner)
+                else:
+                    p = win_prob(t1, t2)
+                    if p >= 0.5:
+                        s16.append((t1, t2, p))
+                        e8_field.append(t1)
+                    else:
+                        s16.append((t2, t1, 1-p))
+                        e8_field.append(t2)
+
+            # Play E8 — 1 matchup
+            t1, t2 = e8_field[0], e8_field[1]
+            if t1 is None or t2 is None:
+                reg_winner = t1 if t2 is None else t2
+                e8 = [(reg_winner, None, 1.0)]
+            else:
+                p = win_prob(t1, t2)
+                if p >= 0.5:
+                    e8 = [(t1, t2, p)]
+                    reg_winner = t1
+                else:
+                    e8 = [(t2, t1, 1-p)]
+                    reg_winner = t2
+
+            result[letter] = {
+                "r64": r64,
+                "r32": r32,
+                "s16": s16,
+                "e8":  e8,
+                "winner": reg_winner,
+            }
+
+        # Final Four: W vs X, Y vs Z
+        f4 = []
+        f4_winners = []
+        for l1, l2 in [("W", "X"), ("Y", "Z")]:
+            t1 = result[l1]["winner"]
+            t2 = result[l2]["winner"]
+            if t1 is None or t2 is None:
+                fw = t1 if t2 is None else t2
+                f4.append((fw, None, 1.0))
+                f4_winners.append(fw)
+            else:
+                p = win_prob(t1, t2)
+                if p >= 0.5:
+                    f4.append((t1, t2, p))
+                    f4_winners.append(t1)
+                else:
+                    f4.append((t2, t1, 1-p))
+                    f4_winners.append(t2)
+
+        # Championship
+        t1, t2 = f4_winners[0], f4_winners[1]
+        if t1 is None or t2 is None:
+            champ = t1 if t2 is None else t2
+            ncg = [(champ, None, 1.0)]
+        else:
+            p = win_prob(t1, t2)
+            if p >= 0.5:
+                ncg = [(t1, t2, p)]
+                champ = t1
+            else:
+                ncg = [(t2, t1, 1-p)]
+                champ = t2
+
+        result["f4"] = f4
+        result["ncg"] = ncg
+        result["champion"] = champ
+        return result
+
+    def fb_matchup_card(winner_id, loser_id, prob_winner):
+        """Render a compact full-bracket matchup card."""
+        nw = id_to_name.get(winner_id, "TBD") if winner_id else "TBD"
+        nl = id_to_name.get(loser_id, "TBD") if loser_id else "TBD"
+        sw = id_to_seeddisplay.get(winner_id, "?") if winner_id else "?"
+        sl = id_to_seeddisplay.get(loser_id, "?") if loser_id else "?"
+        gator_cls = "fb-name-w-gator" if nw == "Florida" else ""
+        prob_str = f"{prob_winner*100:.0f}%"
+        return f"""<div class="fb-mc">
+  <div class="fb-row-w">
+    <span class="fb-badge-w">{sw}</span>
+    <span class="fb-name-w {gator_cls}">{nw}</span>
+    <span class="fb-prob">{prob_str}</span>
+  </div>
+  <div class="fb-row-l">
+    <span class="fb-badge-l">{sl}</span>
+    <span class="fb-name-l">{nl}</span>
+  </div>
+</div>"""
+
+    def render_full_bracket_region(letter: str, region_data: dict) -> str:
+        """Render one region as a 4-column HTML bracket with vertical spacing."""
+        BASE_H = 58
+        GAP    = 4
+
+        round_keys   = ["r64", "r32", "s16", "e8"]
+        round_labels = ["Round of 64", "Round of 32", "Sweet 16", "Elite 8"]
+        # slot heights for each round column
+        slot_heights = [
+            BASE_H,
+            2 * BASE_H + GAP,
+            4 * BASE_H + 3 * GAP,
+            8 * BASE_H + 7 * GAP,
+        ]
+
+        cols_html = ""
+        for col_idx, (rkey, rlabel, slot_h) in enumerate(
+            zip(round_keys, round_labels, slot_heights)
+        ):
+            games = region_data[rkey]
+            slots_html = ""
+            for w_id, l_id, prob in games:
+                card = fb_matchup_card(w_id, l_id, prob)
+                slots_html += (
+                    f'<div class="fb-slot" style="height:{slot_h}px;">'
+                    f'{card}'
+                    f'</div>'
+                )
+            cols_html += (
+                f'<div class="fb-col">'
+                f'<div class="fb-col-hdr">{rlabel}</div>'
+                f'{slots_html}'
+                f'</div>'
+            )
+
+        region_name = REGION_NAMES[letter]
+        winner_id = region_data["winner"]
+        winner_name = id_to_name.get(winner_id, "TBD") if winner_id else "TBD"
+        winner_seed = id_to_seeddisplay.get(winner_id, "?") if winner_id else "?"
+
+        return f"""
+<div style="margin-bottom:8px;">
+  <div class="region-hdr" style="border-radius:8px;margin-bottom:6px;">
+    <span>{region_name} Region</span>
+    <span class="fav">Elite 8 Winner: ({winner_seed}) {winner_name}</span>
+  </div>
+  <div class="fb-wrap">
+    <div class="fb-bracket">{cols_html}</div>
+  </div>
+</div>"""
+
+    def render_ff_game_html(w_id, l_id, prob, label):
+        """Render a Final Four or Championship game card."""
+        nw = id_to_name.get(w_id, "TBD") if w_id else "TBD"
+        nl = id_to_name.get(l_id, "TBD") if l_id else "TBD"
+        sw = id_to_seeddisplay.get(w_id, "?") if w_id else "?"
+        sl = id_to_seeddisplay.get(l_id, "?") if l_id else "?"
+        gator_w = f"color:{ORANGE};" if nw == "Florida" else ""
+        gator_l = f"color:{ORANGE};opacity:0.7;" if nl == "Florida" else ""
+        prob_str = f"{prob*100:.0f}%"
+        return f"""
+<div style="margin-bottom:8px;">
+  <div style="font-size:0.65rem;font-weight:700;color:#999;text-transform:uppercase;
+              letter-spacing:0.6px;margin-bottom:4px;">{label}</div>
+  <div class="ff-game">
+    <div style="display:flex;align-items:center;gap:8px;padding:4px 0;">
+      <span style="font-size:0.65rem;font-weight:800;color:white;background:{GREEN};
+                   border-radius:3px;padding:1px 5px;min-width:18px;text-align:center;">{sw}</span>
+      <span style="font-size:0.82rem;font-weight:700;color:#15803d;flex:1;{gator_w}">{nw}</span>
+      <span style="font-size:0.72rem;font-weight:800;color:{GREEN};">{prob_str}</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;padding:4px 0;
+                border-top:1px solid #f0f2f8;">
+      <span style="font-size:0.65rem;font-weight:700;color:#ccc;background:#f0f0f0;
+                   border-radius:3px;padding:1px 5px;min-width:18px;text-align:center;">{sl}</span>
+      <span style="font-size:0.82rem;font-weight:400;color:#bbb;flex:1;{gator_l}">{nl}</span>
+    </div>
+  </div>
+</div>"""
+
+    # ── First Four section ───────────────────────────────────────────────────
     ff_items = sorted(first_four.items())
     if ff_items:
         st.markdown('<div class="stitle">First Four — Play-In Games</div>',
@@ -608,6 +919,74 @@ with tab_bracket:
     with col_s: st.markdown(render_region("X"), unsafe_allow_html=True)
     with col_m: st.markdown(render_region("Y"), unsafe_allow_html=True)
     with col_w: st.markdown(render_region("Z"), unsafe_allow_html=True)
+
+    # ── Full predicted bracket ───────────────────────────────────────────────
+    st.write("")
+    st.markdown('<div class="stitle">Model\'s Predicted Full Bracket</div>',
+                unsafe_allow_html=True)
+    st.caption("Deterministic bracket — model always picks the higher-probability team in each round.")
+
+    bracket_data = build_predicted_bracket()
+
+    # Top row: East (W) and South (X)
+    row1_c1, row1_c2 = st.columns(2)
+    with row1_c1:
+        st.markdown(render_full_bracket_region("W", bracket_data["W"]),
+                    unsafe_allow_html=True)
+    with row1_c2:
+        st.markdown(render_full_bracket_region("X", bracket_data["X"]),
+                    unsafe_allow_html=True)
+
+    # Bottom row: Midwest (Y) and West (Z)
+    row2_c1, row2_c2 = st.columns(2)
+    with row2_c1:
+        st.markdown(render_full_bracket_region("Y", bracket_data["Y"]),
+                    unsafe_allow_html=True)
+    with row2_c2:
+        st.markdown(render_full_bracket_region("Z", bracket_data["Z"]),
+                    unsafe_allow_html=True)
+
+    # Final Four and Championship
+    st.markdown('<div class="ff-section">', unsafe_allow_html=True)
+    st.markdown(f'<div style="font-size:1rem;font-weight:800;color:{BLUE};margin-bottom:12px;">Final Four &amp; Championship</div>',
+                unsafe_allow_html=True)
+
+    ff_c1, ff_c2, ff_c3 = st.columns([2, 2, 2])
+
+    f4_games = bracket_data["f4"]
+    ncg_games = bracket_data["ncg"]
+    champ_id  = bracket_data["champion"]
+
+    with ff_c1:
+        if len(f4_games) > 0:
+            w, l, p = f4_games[0]
+            st.markdown(render_ff_game_html(w, l, p, "Semifinal 1 — East vs South"),
+                        unsafe_allow_html=True)
+    with ff_c2:
+        if len(f4_games) > 1:
+            w, l, p = f4_games[1]
+            st.markdown(render_ff_game_html(w, l, p, "Semifinal 2 — Midwest vs West"),
+                        unsafe_allow_html=True)
+    with ff_c3:
+        if ncg_games:
+            w, l, p = ncg_games[0]
+            st.markdown(render_ff_game_html(w, l, p, "National Championship"),
+                        unsafe_allow_html=True)
+            champ_name = id_to_name.get(champ_id, "TBD") if champ_id else "TBD"
+            champ_seed = id_to_seeddisplay.get(champ_id, "?") if champ_id else "?"
+            gator_style = f"color:{ORANGE};" if champ_name == "Florida" else f"color:{BLUE};"
+            st.markdown(f"""
+<div style="text-align:center;margin-top:10px;padding:10px;
+            background:linear-gradient(135deg,{BLUE},{DARK_BLUE});
+            border-radius:8px;">
+  <div style="font-size:0.65rem;font-weight:700;color:rgba(255,255,255,0.7);
+              text-transform:uppercase;letter-spacing:0.8px;">Model's Predicted Champion</div>
+  <div style="font-size:1.1rem;font-weight:900;{gator_style}margin-top:4px;">
+    ({champ_seed}) {champ_name}
+  </div>
+</div>""", unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -709,6 +1088,125 @@ with tab_matchup:
             font=dict(color=BLUE),
         )
         st.plotly_chart(fig_cmp, use_container_width=True)
+
+        # ── Key Factors section ──────────────────────────────────────────────
+        STAT_COLS = list(STAT_LABELS.keys())
+
+        # Look up both teams in stats_df
+        id_a = int(ra["TeamID"])
+        id_b = int(rb["TeamID"])
+
+        stats_a = None
+        stats_b = None
+        if "TeamID" in stats_df.columns:
+            row_a_stats = stats_df[stats_df["TeamID"] == id_a]
+            row_b_stats = stats_df[stats_df["TeamID"] == id_b]
+            if not row_a_stats.empty:
+                stats_a = row_a_stats.iloc[0]
+            if not row_b_stats.empty:
+                stats_b = row_b_stats.iloc[0]
+        elif "TeamName" in stats_df.columns:
+            row_a_stats = stats_df[stats_df["TeamName"] == team_a]
+            row_b_stats = stats_df[stats_df["TeamName"] == team_b]
+            if not row_a_stats.empty:
+                stats_a = row_a_stats.iloc[0]
+            if not row_b_stats.empty:
+                stats_b = row_b_stats.iloc[0]
+
+        if stats_a is not None and stats_b is not None:
+            winner_name = team_a if p_a > 0.5 else team_b
+            st.write("")
+            st.markdown(f'<div class="stitle">Why the Model Favors {winner_name}</div>',
+                        unsafe_allow_html=True)
+
+            # Compute differentials for available stats
+            diffs = []
+            for stat in STAT_COLS:
+                if stat in stats_a.index and stat in stats_b.index:
+                    try:
+                        val_a = float(stats_a[stat])
+                        val_b = float(stats_b[stat])
+                        diff = abs(val_a - val_b)
+                        diffs.append((stat, val_a, val_b, diff))
+                    except (ValueError, TypeError):
+                        pass
+
+            if diffs:
+                # Sort by absolute differential, take top 3
+                diffs.sort(key=lambda x: x[3], reverse=True)
+                top_factors = diffs[:3]
+
+                # Build bar max for scaling
+                max_diff = max(d[3] for d in top_factors) if top_factors else 1.0
+
+                kf_rows_html = ""
+                for stat, val_a, val_b, diff in top_factors:
+                    label = STAT_LABELS.get(stat, stat.replace("_", " ").title())
+
+                    # For adjD lower is better — flip advantage logic
+                    lower_is_better = (stat == "adjD")
+                    if lower_is_better:
+                        a_has_edge = val_a < val_b
+                    else:
+                        a_has_edge = val_a > val_b
+
+                    bar_color = ORANGE if a_has_edge else BLUE
+                    edge_team = team_a if a_has_edge else team_b
+                    edge_color = ORANGE if a_has_edge else BLUE
+
+                    # Bar width as % of max_diff
+                    bar_pct = min(100, int((diff / max_diff) * 100)) if max_diff > 0 else 0
+
+                    # Format values
+                    if stat == "WinPct":
+                        fmt_a = f"{val_a*100:.1f}%"
+                        fmt_b = f"{val_b*100:.1f}%"
+                    elif stat in ("adjEM", "sos_adjEM", "avg_ScoreDiff"):
+                        fmt_a = f"{val_a:+.1f}"
+                        fmt_b = f"{val_b:+.1f}"
+                    elif stat == "barthag":
+                        fmt_a = f"{val_a:.3f}"
+                        fmt_b = f"{val_b:.3f}"
+                    else:
+                        fmt_a = f"{val_a:.1f}"
+                        fmt_b = f"{val_b:.1f}"
+
+                    kf_rows_html += f"""
+<div class="kf-row">
+  <div class="kf-label">{label}</div>
+  <div class="kf-val" style="color:{ORANGE if a_has_edge else '#666'};">{fmt_a}</div>
+  <div class="kf-bar-wrap">
+    <div class="kf-bar" style="width:{bar_pct}%;background:{bar_color};"></div>
+  </div>
+  <div class="kf-val" style="color:{BLUE if not a_has_edge else '#666'};">{fmt_b}</div>
+  <div class="kf-edge" style="color:{edge_color};">{edge_team} edge</div>
+</div>"""
+
+                # Header row
+                header_html = f"""
+<div style="display:flex;align-items:center;gap:10px;padding:6px 0 4px;
+            border-bottom:2px solid #eaeef8;margin-bottom:4px;">
+  <div style="font-size:0.72rem;font-weight:800;color:#999;text-transform:uppercase;
+              letter-spacing:0.6px;min-width:200px;">Factor</div>
+  <div style="font-size:0.72rem;font-weight:800;color:{ORANGE};text-transform:uppercase;
+              letter-spacing:0.6px;min-width:60px;text-align:right;">{team_a}</div>
+  <div style="flex:1;font-size:0.72rem;font-weight:800;color:#999;text-transform:uppercase;
+              letter-spacing:0.6px;text-align:center;">Advantage</div>
+  <div style="font-size:0.72rem;font-weight:800;color:{BLUE};text-transform:uppercase;
+              letter-spacing:0.6px;min-width:60px;text-align:right;">{team_b}</div>
+  <div style="min-width:80px;"></div>
+</div>"""
+
+                st.markdown(f"""
+<div style="background:white;border-radius:12px;padding:16px 20px;
+            box-shadow:0 2px 10px rgba(0,33,165,0.07);border:1px solid #eaeef8;">
+  {header_html}
+  {kf_rows_html}
+</div>""", unsafe_allow_html=True)
+            else:
+                st.info("Stat data not available for factor comparison.")
+        else:
+            st.info("Team stats not available for one or both selected teams.")
 
 
 # ════════════════════════════════════════════════════════════════════════════
