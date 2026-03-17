@@ -275,6 +275,44 @@ def load_data():
     champ_hist   = pd.read_csv(BASE / "outputs" / "champion_history.csv")
     upset_df     = pd.read_csv(BASE / "outputs" / "upset_rates.csv")
     champ_prof   = pd.read_csv(BASE / "outputs" / "champion_profile.csv")
+    cv_preds     = pd.read_parquet(BASE / "outputs" / "cv_predictions.parquet")
+
+    # Historical tournament results for team deep-dive
+    hist_results = pd.read_csv(BASE / "march-machine-learning-mania-2026" / "MNCAATourneyCompactResults.csv")
+    hist_seeds_all = pd.read_csv(BASE / "march-machine-learning-mania-2026" / "MNCAATourneySeeds.csv")
+    hist_teams   = pd.read_csv(BASE / "march-machine-learning-mania-2026" / "MTeams.csv")
+    hist_seeds_all["SeedNum"] = hist_seeds_all["Seed"].apply(
+        lambda s: int("".join(filter(str.isdigit, s)))
+    )
+
+    # KenPom extended data for player spotlight
+    try:
+        height_exp = pd.read_parquet(BASE / "data" / "raw" / "kenpom_height_exp.parquet")
+        height_exp = height_exp[height_exp["season"] == 2026].copy()
+        # Convert positional heights (stored as "+X.X" strings) to float
+        for pos_col in ["Avg Hgt", "C Hgt", "PF Hgt", "SF Hgt", "SG Hgt", "PG Hgt"]:
+            if pos_col in height_exp.columns:
+                height_exp[pos_col] = height_exp[pos_col].apply(
+                    lambda x: float(str(x).replace("+", "")) if pd.notna(x) else np.nan
+                )
+        height_exp["Experience"] = pd.to_numeric(height_exp["Experience"], errors="coerce")
+    except Exception:
+        height_exp = pd.DataFrame()
+
+    try:
+        misc_stats = pd.read_parquet(BASE / "data" / "raw" / "kenpom_misc_stats.parquet")
+        misc_stats = misc_stats[misc_stats["season"] == 2026].copy()
+        # 3P% column has actual values (27-41%), 2P% col = rank of 3P%, FT% = 2P% value
+        misc_stats["kp_3pt_pct"]  = pd.to_numeric(misc_stats["3P%"],  errors="coerce")
+        misc_stats["kp_2pt_pct"]  = pd.to_numeric(misc_stats["FT%"],  errors="coerce")
+        # col_12 is steal%, col_14 is block% (from manual inspection)
+        misc_stats["kp_stl_pct"]  = pd.to_numeric(misc_stats.get("col_12", pd.Series(dtype=float)), errors="coerce")
+        misc_stats["kp_3pa_rate"] = pd.to_numeric(misc_stats["3PA%"], errors="coerce")
+        # Normalize team names (strip seed suffix digits)
+        import re as _re
+        misc_stats["TeamClean"] = misc_stats["Team"].str.replace(r"\s*\d+$", "", regex=True).str.strip()
+    except Exception:
+        misc_stats = pd.DataFrame()
 
     for fi in [fi_xgb, fi_lgb]:
         fi.drop(fi[fi["feature"].isna() | (fi["feature"] == "")].index, inplace=True)
@@ -287,9 +325,11 @@ def load_data():
         _, t1, t2 = row["ID"].split("_")
         prob_lookup[(int(t1), int(t2))] = float(row["Pred"])
 
-    return round_df, fi_xgb, fi_lgb, prob_lookup, stats_df, champ_hist, upset_df, champ_prof
+    return (round_df, fi_xgb, fi_lgb, prob_lookup, stats_df, champ_hist, upset_df,
+            champ_prof, cv_preds, hist_results, hist_seeds_all, hist_teams, height_exp, misc_stats)
 
-round_df, fi_xgb, fi_lgb, prob_lookup, stats_df, champ_hist, upset_df, champ_prof = load_data()
+(round_df, fi_xgb, fi_lgb, prob_lookup, stats_df, champ_hist, upset_df,
+ champ_prof, cv_preds, hist_results, hist_seeds_all, hist_teams, height_exp, misc_stats) = load_data()
 
 round_df["SeedDisplay"] = round_df["Seed"].apply(fmt_seed)
 round_df["SeedNum"]     = pd.to_numeric(round_df["SeedNum"], errors="coerce").fillna(17).astype(int)
@@ -434,7 +474,7 @@ st.divider()
 # ══════════════════════════════════════════════════════════════════════════════
 # TABS
 # ══════════════════════════════════════════════════════════════════════════════
-tab_odds, tab_bracket, tab_matchup, tab_pool, tab_dna, tab_upset, tab_model = st.tabs([
+tab_odds, tab_bracket, tab_matchup, tab_pool, tab_dna, tab_upset, tab_model, tab_optimizer, tab_deepdive, tab_hot, tab_calibration = st.tabs([
     "Championship Odds",
     "Full Bracket",
     "Matchup Explorer",
@@ -442,6 +482,10 @@ tab_odds, tab_bracket, tab_matchup, tab_pool, tab_dna, tab_upset, tab_model = st
     "Championship DNA",
     "Upset Picker",
     "Model Insights",
+    "Bracket Optimizer",
+    "Team Deep-Dive",
+    "Hot Streaks & Busters",
+    "Model Calibration",
 ])
 
 
@@ -1939,6 +1983,1125 @@ with tab_upset:
     <span style="color:{GREEN}">→ {m['dog_name']} ({m['dog_seed']})</span>
   </div>
   {stat_html}
+</div>""", unsafe_allow_html=True)
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# TAB 8 — Bracket Optimizer
+# ════════════════════════════════════════════════════════════════════════════
+with tab_optimizer:
+    st.markdown('<div class="stitle">Bracket Optimizer</div>', unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="info-banner">
+        Find the bracket that maximizes your expected score under your pool's scoring rules.
+        The optimizer picks the team with the highest expected points at each bracket slot,
+        using the model's Monte Carlo-computed round probabilities.
+    </div>""", unsafe_allow_html=True)
+
+    SCORING_PRESETS = {
+        "ESPN Standard (10-20-40-80-160-320)":   {"R64":10,"R32":20,"S16":40,"E8":80,"F4":160,"NCG":160,"Champion":320},
+        "CBS Sports (2-4-8-16-32-64)":           {"R64":2, "R32":4, "S16":8, "E8":16,"F4":32, "NCG":32, "Champion":64},
+        "Yahoo Sports (1-2-4-8-16-32)":          {"R64":1, "R32":2, "S16":4, "E8":8, "F4":16, "NCG":16, "Champion":32},
+        "Upset-Heavy (2x pts for upsets)":       {"R64":10,"R32":20,"S16":40,"E8":80,"F4":160,"NCG":160,"Champion":320},
+        "Flat (1 pt per win)":                   {"R64":1, "R32":1, "S16":1, "E8":1, "F4":1, "NCG":1, "Champion":1},
+        "Custom":                                None,
+    }
+
+    opt_c1, opt_c2 = st.columns([2, 2])
+    with opt_c1:
+        preset_name = st.selectbox("Scoring System", list(SCORING_PRESETS.keys()), key="opt_preset")
+
+    pts_cfg = SCORING_PRESETS[preset_name]
+    if pts_cfg is None:
+        st.markdown("**Enter custom points per round:**")
+        cc1, cc2, cc3, cc4, cc5, cc6 = st.columns(6)
+        pts_cfg = {
+            "R64":      cc1.number_input("R64", value=10, min_value=0, key="opt_r64"),
+            "R32":      cc2.number_input("R32", value=20, min_value=0, key="opt_r32"),
+            "S16":      cc3.number_input("S16", value=40, min_value=0, key="opt_s16"),
+            "E8":       cc4.number_input("E8",  value=80, min_value=0, key="opt_e8"),
+            "F4":       cc5.number_input("F4",  value=160, min_value=0, key="opt_f4"),
+            "Champion": cc6.number_input("Champ", value=320, min_value=0, key="opt_champ"),
+        }
+        pts_cfg["NCG"] = pts_cfg["F4"]  # NCG win = F4 pts toward championship
+
+    ROUND_COLS = ["prob_R32","prob_S16","prob_E8","prob_F4","prob_NCG","prob_Champion"]
+    ROUND_KEYS = ["R64","R32","S16","E8","F4","Champion"]
+
+    # Compute expected score for each team
+    def team_expected_score(team_id, pts):
+        row = round_df[round_df["TeamID"] == team_id]
+        if row.empty: return 0.0
+        r = row.iloc[0]
+        # prob_R32 = P(winning R64), prob_S16 = P(winning R32), etc.
+        val = (r["prob_R32"]      * pts.get("R64", 0) +
+               r["prob_S16"]      * pts.get("R32", 0) +
+               r["prob_E8"]       * pts.get("S16", 0) +
+               r["prob_F4"]       * pts.get("E8",  0) +
+               r["prob_NCG"]      * pts.get("F4",  0) +
+               r["prob_Champion"] * pts.get("Champion", 0))
+        return float(val)
+
+    exp_scores = {int(r["TeamID"]): team_expected_score(int(r["TeamID"]), pts_cfg)
+                  for _, r in round_df.iterrows()}
+
+    # Build chalk expected score for comparison (always pick lower seed num = better seed)
+    def chalk_pick(t1_id, t2_id):
+        s1 = id_to_seednum.get(t1_id, 99)
+        s2 = id_to_seednum.get(t2_id, 99)
+        return t1_id if s1 <= s2 else t2_id
+
+    def model_pick(t1_id, t2_id):
+        return t1_id if exp_scores.get(t1_id, 0) >= exp_scores.get(t2_id, 0) else t2_id
+
+    def simulate_bracket_picks(pick_fn):
+        """Simulate a bracket using pick_fn(t1_id, t2_id) -> winner."""
+        BRACKET_ORDER_LOCAL = [(1,16),(8,9),(5,12),(4,13),(6,11),(3,14),(7,10),(2,15)]
+        all_picks = {}  # round_name -> list of (fav_name, dog_name, pick_name)
+        region_e8 = []
+
+        for reg in ["W","X","Y","Z"]:
+            reg_df = round_df[round_df["Seed"].str.startswith(reg)].copy()
+            seed_to_team = {}
+            for _, row in reg_df.iterrows():
+                sn = int(row["SeedNum"])
+                if sn not in seed_to_team:
+                    seed_to_team[sn] = int(row["TeamID"])
+
+            # Handle First Four: if two teams share same seed num (a/b), pick the survivor
+            for sn in list(seed_to_team.keys()):
+                a_row = reg_df[(reg_df["SeedNum"] == sn) & (reg_df["Seed"].str.endswith("a"))]
+                b_row = reg_df[(reg_df["SeedNum"] == sn) & (reg_df["Seed"].str.endswith("b"))]
+                if not a_row.empty and not b_row.empty:
+                    seed_to_team[sn] = pick_fn(int(a_row.iloc[0]["TeamID"]), int(b_row.iloc[0]["TeamID"]))
+
+            current = []
+            for s_fav, s_dog in BRACKET_ORDER_LOCAL:
+                t_fav = seed_to_team.get(s_fav)
+                t_dog = seed_to_team.get(s_dog)
+                if t_fav is None or t_dog is None: continue
+                winner = pick_fn(t_fav, t_dog)
+                all_picks.setdefault("R64", []).append({
+                    "game": f"({s_fav}) {id_to_name.get(t_fav,'')} vs ({s_dog}) {id_to_name.get(t_dog,'')}",
+                    "pick": id_to_name.get(winner, ""), "seed": id_to_seednum.get(winner, ""),
+                })
+                current.append(winner)
+
+            for rname in ["R32","S16","E8"]:
+                next_r = []
+                for i in range(0, len(current)-1, 2):
+                    t1, t2 = current[i], current[i+1]
+                    winner = pick_fn(t1, t2)
+                    all_picks.setdefault(rname, []).append({
+                        "game": f"({id_to_seednum.get(t1,'?')}) {id_to_name.get(t1,'')} vs ({id_to_seednum.get(t2,'?')}) {id_to_name.get(t2,'')}",
+                        "pick": id_to_name.get(winner, ""), "seed": id_to_seednum.get(winner, ""),
+                    })
+                    next_r.append(winner)
+                current = next_r
+            if current:
+                region_e8.append(current[0])
+
+        # Final Four
+        ff_pairs = [(0,1),(2,3)]
+        ncg_teams = []
+        for i, j in ff_pairs:
+            if i < len(region_e8) and j < len(region_e8):
+                t1, t2 = region_e8[i], region_e8[j]
+                winner = pick_fn(t1, t2)
+                all_picks.setdefault("F4", []).append({
+                    "game": f"({id_to_seednum.get(t1,'?')}) {id_to_name.get(t1,'')} vs ({id_to_seednum.get(t2,'?')}) {id_to_name.get(t2,'')}",
+                    "pick": id_to_name.get(winner, ""), "seed": id_to_seednum.get(winner, ""),
+                })
+                ncg_teams.append(winner)
+
+        if len(ncg_teams) == 2:
+            champ = pick_fn(ncg_teams[0], ncg_teams[1])
+            all_picks["Champion"] = [{
+                "game": f"({id_to_seednum.get(ncg_teams[0],'?')}) {id_to_name.get(ncg_teams[0],'')} vs ({id_to_seednum.get(ncg_teams[1],'?')}) {id_to_name.get(ncg_teams[1],'')}",
+                "pick": id_to_name.get(champ, ""), "seed": id_to_seednum.get(champ, ""),
+            }]
+
+        return all_picks
+
+    def compute_bracket_expected_score(picks_by_round, pts):
+        """Given picks, compute expected score summing prob × points for each pick."""
+        round_map = {"R64":"prob_R32","R32":"prob_S16","S16":"prob_E8","E8":"prob_F4",
+                     "F4":"prob_NCG","Champion":"prob_Champion"}
+        total = 0.0
+        for rname, game_picks in picks_by_round.items():
+            prob_col = round_map.get(rname)
+            round_pts = pts.get(rname, 0)
+            if prob_col is None: continue
+            for gp in game_picks:
+                team_name = gp["pick"]
+                row = round_df[round_df["TeamName"] == team_name]
+                if not row.empty and prob_col in row.columns:
+                    total += float(row.iloc[0][prob_col]) * round_pts
+        return round(total, 1)
+
+    model_picks   = simulate_bracket_picks(model_pick)
+    chalk_picks   = simulate_bracket_picks(chalk_pick)
+    model_exp_pts = compute_bracket_expected_score(model_picks, pts_cfg)
+    chalk_exp_pts = compute_bracket_expected_score(chalk_picks, pts_cfg)
+
+    # Summary cards
+    st.write("")
+    mc1, mc2, mc3 = st.columns(3)
+    with mc1:
+        champ_pick = model_picks.get("Champion", [{}])[0].get("pick", "—")
+        champ_seed = model_picks.get("Champion", [{}])[0].get("seed", "")
+        st.markdown(f"""
+        <div class="gator-card">
+            <div class="lbl">Optimal Champion Pick</div>
+            <div class="val" style="font-size:1.4rem;">{champ_pick}</div>
+            <div class="sub">Seed {champ_seed} · {preset_name.split('(')[0].strip()}</div>
+        </div>""", unsafe_allow_html=True)
+    with mc2:
+        st.markdown(f"""
+        <div class="stat-card">
+            <div class="lbl">Expected Score (Optimal)</div>
+            <div class="val">{model_exp_pts}</div>
+            <div class="sub">pts using model probabilities</div>
+        </div>""", unsafe_allow_html=True)
+    with mc3:
+        delta = round(model_exp_pts - chalk_exp_pts, 1)
+        delta_color = GREEN if delta >= 0 else "#ef4444"
+        st.markdown(f"""
+        <div class="stat-card">
+            <div class="lbl">vs Chalk Bracket</div>
+            <div class="val" style="color:{delta_color};">{'+' if delta>=0 else ''}{delta}</div>
+            <div class="sub">Chalk expected: {chalk_exp_pts} pts</div>
+        </div>""", unsafe_allow_html=True)
+
+    st.write("")
+
+    # Round-by-round picks comparison
+    DISPLAY_ROUNDS = ["Champion","F4","E8","S16","R32","R64"]
+    ROUND_DISPLAY_NAMES = {"Champion":"Championship","F4":"Final Four","E8":"Elite Eight",
+                           "S16":"Sweet Sixteen","R32":"Round of 32","R64":"Round of 64"}
+
+    for rname in DISPLAY_ROUNDS:
+        m_picks = model_picks.get(rname, [])
+        c_picks = chalk_picks.get(rname, [])
+        if not m_picks: continue
+        rnd_pts = pts_cfg.get(rname, 0)
+        with st.expander(
+            f"**{ROUND_DISPLAY_NAMES.get(rname, rname)}** — {len(m_picks)} pick(s)  ·  {rnd_pts} pts each",
+            expanded=(rname in ["Champion","F4","E8"])
+        ):
+            # Side-by-side: model vs chalk
+            hdr1, hdr2 = st.columns(2)
+            hdr1.markdown(f"**Model Optimal** *(maximizes expected score)*")
+            hdr2.markdown(f"**Chalk Bracket** *(always pick the better seed)*")
+            for i, (mp, cp) in enumerate(zip(m_picks, c_picks)):
+                col1, col2 = st.columns(2)
+                diff_color = GREEN if mp["pick"] != cp["pick"] else "#666"
+                with col1:
+                    marker = "**" if mp["pick"] != cp["pick"] else ""
+                    st.markdown(
+                        f'<span style="color:{diff_color};font-weight:{"800" if mp["pick"]!=cp["pick"] else "400"};">'
+                        f'({mp["seed"]}) {mp["pick"]}</span>',
+                        unsafe_allow_html=True
+                    )
+                with col2:
+                    st.markdown(
+                        f'<span style="color:#666;">({cp["seed"]}) {cp["pick"]}</span>',
+                        unsafe_allow_html=True
+                    )
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# TAB 9 — Team Deep-Dive
+# ════════════════════════════════════════════════════════════════════════════
+with tab_deepdive:
+    st.markdown('<div class="stitle">Team Deep-Dive</div>', unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="info-banner">
+        Select a team to see their full statistical profile, champion comparison, round-by-round
+        probabilities, historical tournament record, projected bracket path, and roster profile.
+    </div>""", unsafe_allow_html=True)
+
+    dd_team = st.selectbox("Select Team", team_names_sorted, key="dd_team_select")
+    dd_row  = round_df[round_df["TeamName"] == dd_team]
+    if dd_row.empty:
+        st.warning("Team data not found.")
+    else:
+        dd_r    = dd_row.iloc[0]
+        dd_id   = int(dd_r["TeamID"])
+        dd_seed = dd_r["SeedDisplay"]
+        dd_seednum = int(dd_r["SeedNum"])
+
+        # ── Header cards ─────────────────────────────────────────────────
+        hc1, hc2, hc3, hc4, hc5 = st.columns(5)
+        for col, (lbl, val, sub) in zip([hc1,hc2,hc3,hc4,hc5], [
+            ("Seed",           dd_seed,                           "Tournament seed"),
+            ("Champ %",        f"{dd_r['prob_Champion']*100:.1f}%","Win it all"),
+            ("Final Four %",   f"{dd_r['prob_F4']*100:.1f}%",    "Reach Final Four"),
+            ("Elite Eight %",  f"{dd_r['prob_E8']*100:.1f}%",    "Reach Elite Eight"),
+            ("First Round Win",f"{dd_r['prob_R32']*100:.1f}%",   "Win first game"),
+        ]):
+            with col:
+                cls = "gator-card" if dd_team == "Florida" else "stat-card"
+                st.markdown(f"""
+                <div class="{cls}">
+                    <div class="lbl">{lbl}</div>
+                    <div class="val" style="font-size:1.5rem;">{val}</div>
+                    <div class="sub">{sub}</div>
+                </div>""", unsafe_allow_html=True)
+        st.write("")
+
+        # ── Round probability chart ───────────────────────────────────────
+        st.markdown(f'<div class="stitle" style="font-size:1.05rem;">Round-by-Round Probabilities</div>',
+                    unsafe_allow_html=True)
+        rnd_lbls = ["R32","S16","E8","F4","NCG","Champion"]
+        rnd_display = ["Win R64","Sweet 16","Elite 8","Final Four","NCG","Champion"]
+        rnd_probs = [dd_r[f"prob_{r}"] * 100 for r in rnd_lbls]
+        seed_hist_probs = [
+            {1:97,2:93,3:86,4:79,5:65,6:62,7:61,8:49,9:51,10:39,11:38,12:35,13:21,14:14,15:7,16:3}.get(dd_seednum,50),
+            {1:71,2:50,3:37,4:27,5:17,6:14,7:12,8:10,9:8,10:7,11:10,12:9,13:4,14:2,15:1,16:0}.get(dd_seednum,10),
+            {1:42,2:23,3:17,4:12,5:7,6:6,7:5,8:4,9:3,10:3,11:5,12:4,13:2,14:1,15:0,16:0}.get(dd_seednum,5),
+            {1:22,2:10,3:7,4:4,5:3,6:2,7:2,8:1,9:1,10:1,11:2,12:1,13:0,14:0,15:0,16:0}.get(dd_seednum,2),
+            {1:11,2:5,3:3,4:2,5:1,6:1,7:1,8:0,9:0,10:0,11:1,12:0,13:0,14:0,15:0,16:0}.get(dd_seednum,1),
+            {1:6, 2:2,3:1,4:1,5:0,6:0,7:0,8:0,9:0,10:0,11:1,12:0,13:0,14:0,15:0,16:0}.get(dd_seednum,0),
+        ]
+        fig_rnd = go.Figure()
+        fig_rnd.add_trace(go.Bar(
+            name="Historical avg for this seed",
+            x=rnd_display, y=seed_hist_probs,
+            marker_color="#d1d5db", opacity=0.7,
+            hovertemplate="%{x}: %{y:.0f}% (hist avg)<extra></extra>",
+        ))
+        fig_rnd.add_trace(go.Bar(
+            name=dd_team,
+            x=rnd_display, y=rnd_probs,
+            marker_color=BLUE if dd_team != "Florida" else ORANGE,
+            text=[f"{v:.1f}%" for v in rnd_probs],
+            textposition="outside",
+            hovertemplate="%{x}: %{y:.1f}%<extra></extra>",
+        ))
+        fig_rnd.update_layout(
+            barmode="group",
+            plot_bgcolor="white", paper_bgcolor="white",
+            height=320, margin=dict(t=20,b=20,l=40,r=20),
+            yaxis=dict(title="Probability (%)", gridcolor="#eee", range=[0, max(rnd_probs+seed_hist_probs)*1.25 or 10]),
+            legend=dict(orientation="h", yanchor="bottom", y=-0.25, x=0),
+            xaxis=dict(tickfont=dict(size=11)),
+        )
+        st.plotly_chart(fig_rnd, use_container_width=True)
+
+        # ── Key Stats vs Champion Median ──────────────────────────────────
+        st.markdown(f'<div class="stitle" style="font-size:1.05rem;">Key Stats vs Champion Median</div>',
+                    unsafe_allow_html=True)
+        dd_stats = stats_df[stats_df["TeamID"] == dd_id]
+        champ_medians_map = {row["stat"]: row["median"] for _, row in champ_prof.iterrows()}
+
+        DEEP_STATS = [
+            ("adjEM",           "Adj. Efficiency Margin",   True,  "%+.1f"),
+            ("adjO",            "Offensive Efficiency",     True,  "%.1f"),
+            ("adjD",            "Defensive Efficiency",     False, "%.1f"),
+            ("barthag",         "Power Rating (Torvik)",    True,  "%.3f"),
+            ("elo_pre_tourney", "Pre-Tourney Elo",          True,  "%.0f"),
+            ("wab",             "Wins Above Bubble",        True,  "%+.1f"),
+            ("AvgScoreDiff",    "Avg Score Margin",         True,  "%+.1f"),
+            ("sos_adjEM",       "Strength of Schedule",     True,  "%.1f"),
+        ]
+
+        stat_rows_html = ""
+        for skey, slabel, higher_better, fmt in DEEP_STATS:
+            if dd_stats.empty or skey not in dd_stats.columns: continue
+            val = dd_stats[skey].iloc[0]
+            if pd.isna(val): continue
+            med = champ_medians_map.get(skey)
+            if med is None: continue
+            exceeds = (val >= med) if higher_better else (val <= med)
+            color = GREEN if exceeds else ORANGE
+            mark = "Above" if exceeds else "Below"
+            try:
+                val_str = fmt % val
+                med_str = fmt % med
+            except Exception:
+                val_str = f"{val:.2f}"; med_str = f"{med:.2f}"
+            bar_w = min(int(abs(val - med) / (abs(med) + 0.01) * 50 + 50), 100)
+            stat_rows_html += f"""
+<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f0f2f8;">
+  <div style="min-width:160px;font-size:0.82rem;color:#555;">{slabel}</div>
+  <div style="min-width:70px;text-align:right;font-size:0.85rem;font-weight:800;color:{color};">{val_str}</div>
+  <div style="flex:1;height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden;">
+    <div style="height:8px;width:{bar_w}%;background:{color};border-radius:4px;"></div>
+  </div>
+  <div style="min-width:80px;font-size:0.75rem;color:#888;">Champ median: {med_str}</div>
+  <div style="min-width:55px;font-size:0.72rem;font-weight:700;color:{color};">{mark}</div>
+</div>"""
+
+        st.markdown(f'<div style="background:white;border-radius:10px;padding:14px 18px;'
+                    f'box-shadow:0 1px 6px rgba(0,33,165,0.07);border:1px solid #eaeef8;">'
+                    f'{stat_rows_html}</div>', unsafe_allow_html=True)
+        st.write("")
+
+        # ── Historical Tournament Record ──────────────────────────────────
+        st.markdown(f'<div class="stitle" style="font-size:1.05rem;">Historical Tournament Record (since 2003)</div>',
+                    unsafe_allow_html=True)
+        # Get this team's Kaggle TeamID
+        kaggle_id_row = hist_teams[hist_teams["TeamName"] == dd_team]
+        if kaggle_id_row.empty:
+            st.caption("Historical record not available for this team name.")
+        else:
+            kaggle_id = int(kaggle_id_row.iloc[0]["TeamID"])
+            # Build win/loss record per season
+            hist_seasons = hist_seeds_all[hist_seeds_all["TeamID"] == kaggle_id][["Season","Seed","SeedNum"]].copy()
+            wins_df = hist_results[hist_results["WTeamID"] == kaggle_id][["Season","DayNum","WScore","LScore","LTeamID"]].copy()
+            wins_df["Result"] = "W"
+            loss_df = hist_results[hist_results["LTeamID"] == kaggle_id][["Season","DayNum","WScore","LScore","WTeamID"]].copy()
+            loss_df = loss_df.rename(columns={"WTeamID":"LTeamID","WScore":"LScore_","LScore":"WScore_"})
+            loss_df["Result"] = "L"
+
+            # Per-season record
+            hist_recs = []
+            for _, sr in hist_seasons[hist_seasons["Season"] >= 2003].iterrows():
+                szn = int(sr["Season"])
+                s_num = int(sr["SeedNum"])
+                w = len(wins_df[wins_df["Season"] == szn])
+                l = len(loss_df[loss_df["Season"] == szn])
+                total = w + l
+                if total == 0: continue
+                deep = "Champion" if w == 6 else "NCG" if w == 5 else "Final Four" if w == 4 \
+                    else "Elite Eight" if w == 3 else "Sweet 16" if w == 2 else "Round of 32" if w == 1 \
+                    else "R64 Exit"
+                hist_recs.append({"Season": szn, "Seed": s_num, "Wins": w, "Record": f"{w}-{l}", "Deepest Round": deep})
+
+            if not hist_recs:
+                st.caption("No tournament appearances since 2003.")
+            else:
+                hist_tbl = pd.DataFrame(hist_recs).sort_values("Season", ascending=False)
+                total_apps = len(hist_tbl)
+                total_wins = hist_tbl["Wins"].sum()
+                final_fours = (hist_tbl["Wins"] >= 4).sum()
+                titles = (hist_tbl["Wins"] == 6).sum()
+
+                hh1, hh2, hh3, hh4 = st.columns(4)
+                for col, (lbl, val) in zip([hh1,hh2,hh3,hh4], [
+                    ("Tournament Apps", total_apps), ("Total Tourney Wins", total_wins),
+                    ("Final Fours", final_fours), ("Championships", titles),
+                ]):
+                    with col:
+                        st.markdown(f"""
+                        <div class="stat-card">
+                            <div class="lbl">{lbl}</div>
+                            <div class="val">{val}</div>
+                        </div>""", unsafe_allow_html=True)
+                st.write("")
+
+                def color_round(val):
+                    colors = {"Champion":"background:#0021A5;color:white",
+                              "NCG":"background:#1d4ed8;color:white",
+                              "Final Four":"background:#2563eb;color:white",
+                              "Elite Eight":"background:#3b82f6;color:white",
+                              "Sweet 16":"background:#93c5fd;color:#1e3a8a",
+                              "Round of 32":"background:#dbeafe;color:#1e3a8a"}
+                    return colors.get(val, "")
+
+                st.dataframe(
+                    hist_tbl[["Season","Seed","Record","Deepest Round"]]
+                    .style.map(color_round, subset=["Deepest Round"])
+                    .format({"Season": "{:.0f}"}),
+                    use_container_width=True, hide_index=True, height=320,
+                )
+
+        # ── Roster Profile ───────────────────────────────────────────────
+        if not height_exp.empty:
+            st.write("")
+            st.markdown(f'<div class="stitle" style="font-size:1.05rem;">Roster Profile</div>',
+                        unsafe_allow_html=True)
+            # Match team name (KenPom names may have seed suffix stripped already)
+            he_row = height_exp[height_exp["Team"].str.lower().str.strip() == dd_team.lower().strip()]
+            if he_row.empty:
+                # Try partial match
+                he_row = height_exp[height_exp["Team"].str.lower().str.contains(
+                    dd_team.lower().split()[0], na=False
+                )].head(1)
+            if not he_row.empty:
+                hr = he_row.iloc[0]
+                rp_cols = st.columns(4)
+                roster_items = [
+                    ("Avg Height",        hr.get("Avg Hgt",    "N/A"), "inches"),
+                    ("PG Height",         hr.get("PG Hgt",     "N/A"), "inches"),
+                    ("Experience Rank",   hr.get("Experience", "N/A"), "1=most exp"),
+                    ("Bench Quality",     hr.get("Bench",      "N/A"), "pts above avg"),
+                ]
+                for col, (lbl, val, sub) in zip(rp_cols, roster_items):
+                    with col:
+                        st.markdown(f"""
+                        <div class="stat-card">
+                            <div class="lbl">{lbl}</div>
+                            <div class="val" style="font-size:1.4rem;">{val}</div>
+                            <div class="sub">{sub}</div>
+                        </div>""", unsafe_allow_html=True)
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# TAB 10 — Hot Streaks & Busters
+# ════════════════════════════════════════════════════════════════════════════
+with tab_hot:
+    st.markdown('<div class="stitle">Hot Streaks & Bracket Busters</div>', unsafe_allow_html=True)
+
+    hot_df = round_df[["TeamID","TeamName","SeedNum","SeedDisplay","prob_Champion","prob_F4"]].merge(
+        stats_df[["TeamID","elo_momentum","elo_late_winpct","elo_pre_tourney","adjEM","WinPct"]],
+        on="TeamID", how="left"
+    )
+
+    # ── Section 1: Hot Teams ─────────────────────────────────────────────
+    st.markdown(f'<div class="stitle" style="font-size:1.05rem;margin-top:4px;">Hot Teams Entering the Tournament</div>',
+                unsafe_allow_html=True)
+    st.caption("Teams ranked by Elo momentum (rating change over last 10 games) and late-season win rate.")
+
+    hot_sorted = hot_df.sort_values("elo_momentum", ascending=False).head(20)
+    hot_sorted["late_pct"] = (hot_sorted["elo_late_winpct"] * 100).round(0)
+    hot_sorted["momentum_disp"] = hot_sorted["elo_momentum"].apply(lambda v: f"{v:+.0f}" if pd.notna(v) else "N/A")
+
+    fig_hot = go.Figure()
+    colors_hot = [ORANGE if r["TeamName"]=="Florida" else BLUE
+                  for _,r in hot_sorted.iterrows()]
+    fig_hot.add_trace(go.Bar(
+        x=[f"({r['SeedDisplay']}) {r['TeamName']}" for _,r in hot_sorted.iterrows()],
+        y=hot_sorted["elo_momentum"],
+        marker_color=colors_hot,
+        text=[f"{v:+.0f}" for v in hot_sorted["elo_momentum"].fillna(0)],
+        textposition="outside",
+        hovertemplate="<b>%{x}</b><br>Elo Momentum: %{y:+.0f}<extra></extra>",
+        name="Elo Momentum",
+    ))
+    fig_hot.update_layout(
+        title=dict(text="Elo Momentum — Top 20 Teams (Last 10 Games)", font=dict(color=BLUE, size=13)),
+        xaxis=dict(tickangle=-35, tickfont=dict(size=10)),
+        yaxis=dict(title="Elo Change (last 10 games)", gridcolor="#eee"),
+        plot_bgcolor="white", paper_bgcolor="white",
+        height=380, margin=dict(t=40,b=90,l=40,r=20),
+    )
+    st.plotly_chart(fig_hot, use_container_width=True)
+
+    # Late win % vs Elo momentum scatter
+    st.markdown(f'<div class="stitle" style="font-size:1.05rem;">Momentum vs Late-Season Win Rate</div>',
+                unsafe_allow_html=True)
+    st.caption("Top-right quadrant = hot teams with high win rate. Size = championship probability.")
+
+    plot_df = hot_df.dropna(subset=["elo_momentum","elo_late_winpct"])
+    top_label_teams = set(plot_df.nlargest(8,"elo_momentum")["TeamName"].tolist() +
+                          plot_df.nlargest(8,"elo_late_winpct")["TeamName"].tolist() +
+                          plot_df.nlargest(5,"prob_Champion")["TeamName"].tolist())
+
+    fig_scat = go.Figure()
+    # Quadrant lines
+    med_mom = float(plot_df["elo_momentum"].median())
+    med_win = float(plot_df["elo_late_winpct"].median())
+    for x_val in [med_mom]:
+        fig_scat.add_vline(x=x_val, line=dict(color="#e5e7eb", dash="dash", width=1))
+    for y_val in [med_win]:
+        fig_scat.add_hline(y=y_val, line=dict(color="#e5e7eb", dash="dash", width=1))
+
+    # Annotation for quadrant
+    fig_scat.add_annotation(x=plot_df["elo_momentum"].max()*0.85,
+                             y=plot_df["elo_late_winpct"].max()*0.97,
+                             text="Hot & Winning", font=dict(size=9,color=GREEN),
+                             showarrow=False)
+
+    for _, row in plot_df.iterrows():
+        is_highlight = row["TeamName"] in top_label_teams
+        sz = max(10, min(40, row["prob_Champion"] * 2000))
+        clr = ORANGE if row["TeamName"] == "Florida" else (BLUE if is_highlight else "#d1d5db")
+        lbl = f"({row['SeedDisplay']}) {row['TeamName']}" if is_highlight else ""
+        fig_scat.add_trace(go.Scatter(
+            x=[row["elo_momentum"]], y=[row["elo_late_winpct"]],
+            mode="markers+text" if lbl else "markers",
+            text=[lbl] if lbl else None,
+            textposition="top right",
+            textfont=dict(size=9),
+            marker=dict(size=sz, color=clr, opacity=0.75,
+                        line=dict(color="white" if is_highlight else "transparent", width=1.5)),
+            name=row["TeamName"] if is_highlight else "",
+            hovertemplate=f"<b>({row['SeedDisplay']}) {row['TeamName']}</b><br>"
+                          f"Momentum: {row['elo_momentum']:+.0f}<br>"
+                          f"Late Win%: {row['elo_late_winpct']*100:.0f}%<br>"
+                          f"Champ: {row['prob_Champion']*100:.1f}%<extra></extra>",
+            showlegend=is_highlight,
+        ))
+    fig_scat.update_layout(
+        xaxis=dict(title=dict(text="Elo Momentum (last 10 games)", font=dict(size=11)),
+                   gridcolor="#f0f0f0"),
+        yaxis=dict(title=dict(text="Late-Season Win Rate", font=dict(size=11)),
+                   tickformat=".0%", gridcolor="#f0f0f0"),
+        plot_bgcolor="white", paper_bgcolor="white",
+        height=440, margin=dict(l=50,r=30,t=20,b=50),
+        showlegend=False,
+    )
+    st.plotly_chart(fig_scat, use_container_width=True)
+
+    # ── Section 2: Bracket Busters — High Variance Picks ─────────────────
+    st.markdown(f'<div class="stitle" style="font-size:1.05rem;margin-top:4px;">Bracket Busters — High Variance Picks</div>',
+                unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="info-banner">
+        Teams whose model probability significantly exceeds seed expectations —
+        high-upside picks that could bust chalk brackets. EV = model champ% / seed historical champ%.
+        Pool differentiation picks: teams others won't pick, but our model likes.
+    </div>""", unsafe_allow_html=True)
+
+    # Compute "surprise factor" = how much this team outperforms their seed baseline
+    seed_champ_baseline = {
+        1:6.0, 2:2.0, 3:1.0, 4:0.8, 5:0.4, 6:0.3, 7:0.2, 8:0.15,
+        9:0.12, 10:0.10, 11:0.10, 12:0.07, 13:0.03, 14:0.01, 15:0.005, 16:0.001,
+    }
+    buster_rows = []
+    for _, r in round_df.iterrows():
+        sn = int(r["SeedNum"])
+        baseline = seed_champ_baseline.get(sn, 0.001)
+        model_p = float(r["prob_Champion"]) * 100
+        ev = round(model_p / baseline, 2) if baseline > 0 else 0
+        # Variance proxy: spread between F4 and Champion probs (wider = more volatile)
+        f4_p = float(r["prob_F4"]) * 100
+        variance_score = round(f4_p / max(model_p, 0.01), 1)  # F4/Champion ratio
+        buster_rows.append({
+            "Seed": r["SeedDisplay"], "Team": r["TeamName"], "SeedNum": sn,
+            "Model Champ%": round(model_p, 1),
+            "Seed Baseline%": round(baseline, 1),
+            "EV Ratio": ev,
+            "F4%": round(f4_p, 1),
+            "Variance": variance_score,
+        })
+
+    buster_df = pd.DataFrame(buster_rows)
+    # Show teams with EV > 1.5 and not 1-seeds (1-seeds are expected to do well)
+    busters = buster_df[(buster_df["EV Ratio"] >= 1.5) & (buster_df["SeedNum"] >= 3)].sort_values("EV Ratio", ascending=False)
+
+    if not busters.empty:
+        for _, b in busters.head(12).iterrows():
+            ev_c = GREEN if b["EV Ratio"] >= 2.0 else ORANGE
+            f4_disp = f"F4: {b['F4%']:.1f}%"
+            st.markdown(f"""
+<div class="ev-card {"ev-value" if b["EV Ratio"] >= 2.0 else "ev-fair"}">
+  <div>
+    <div class="ev-seed">Seed {b['Seed']}</div>
+    <div class="ev-team">{b['Team']}</div>
+  </div>
+  <div class="ev-pcts">
+    Model: {b['Model Champ%']:.1f}%<br>
+    Baseline: {b['Seed Baseline%']:.1f}%<br>
+    {f4_disp}
+  </div>
+  <div class="ev-ratio" style="color:{ev_c};">{b['EV Ratio']:.1f}x</div>
+</div>""", unsafe_allow_html=True)
+    else:
+        st.info("No bracket busters found — the model closely follows seed expectations this year.")
+
+    # High-ceiling / low-floor section
+    st.write("")
+    st.markdown(f'<div class="stitle" style="font-size:1.05rem;">High Ceiling Picks (F4% >> Champ%)</div>',
+                unsafe_allow_html=True)
+    st.caption("Teams likely to go deep but not necessarily win it all — good for pool strategies with large F4/E8 points.")
+
+    high_ceil = buster_df[buster_df["Variance"] > 3.5].sort_values("Variance", ascending=False).head(10)
+    if not high_ceil.empty:
+        hc_cols = st.columns(min(len(high_ceil), 5))
+        for i, (_, hc) in enumerate(high_ceil.head(5).iterrows()):
+            with hc_cols[i]:
+                st.markdown(f"""
+                <div class="stat-card">
+                    <div class="lbl">Seed {hc['Seed']}</div>
+                    <div class="val" style="font-size:1.2rem;">{hc['Team']}</div>
+                    <div class="sub">F4: {hc['F4%']:.1f}% &nbsp; Champ: {hc['Model Champ%']:.1f}%</div>
+                </div>""", unsafe_allow_html=True)
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# TAB 11 — Model Calibration & Player Spotlight
+# ════════════════════════════════════════════════════════════════════════════
+with tab_calibration:
+    st.markdown('<div class="stitle">Model Calibration</div>', unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="info-banner">
+        A well-calibrated model means: when it says 70%, the team wins ~70% of the time.
+        This reliability diagram shows actual win rates vs predicted probabilities
+        using out-of-fold cross-validation predictions from 2008–2025 tournaments (1,129 games).
+    </div>""", unsafe_allow_html=True)
+
+    # Compute calibration from cv_predictions
+    cv = cv_preds.copy()
+    # Bin predicted probabilities into deciles
+    n_bins = 10
+    cv["bin"] = pd.cut(cv["pred_prob"], bins=np.linspace(0, 1, n_bins+1),
+                       labels=[f"{i*10}-{(i+1)*10}%" for i in range(n_bins)],
+                       include_lowest=True)
+    cal_data = (cv.groupby("bin", observed=True)
+                  .agg(actual_rate=("Label","mean"), count=("Label","count"),
+                       mean_pred=("pred_prob","mean"))
+                  .reset_index())
+    cal_data["bin_mid"] = [i*10 + 5 for i in range(len(cal_data))]
+    cal_data["error_low"]  = cal_data["actual_rate"] * 100 - 1.96*np.sqrt(
+        cal_data["actual_rate"]*(1-cal_data["actual_rate"])/cal_data["count"].clip(1))*100
+    cal_data["error_high"] = cal_data["actual_rate"] * 100 + 1.96*np.sqrt(
+        cal_data["actual_rate"]*(1-cal_data["actual_rate"])/cal_data["count"].clip(1))*100
+
+    fig_cal = go.Figure()
+
+    # Perfect calibration line
+    fig_cal.add_trace(go.Scatter(
+        x=[0,100], y=[0,100],
+        mode="lines", name="Perfect Calibration",
+        line=dict(color="#d1d5db", dash="dash", width=2),
+    ))
+
+    # Confidence intervals
+    fig_cal.add_trace(go.Scatter(
+        x=cal_data["bin_mid"].tolist() + cal_data["bin_mid"].tolist()[::-1],
+        y=cal_data["error_high"].tolist() + cal_data["error_low"].tolist()[::-1],
+        fill="toself", fillcolor="rgba(0,33,165,0.08)",
+        line=dict(color="transparent"), name="95% CI",
+        hoverinfo="skip",
+    ))
+
+    # Actual calibration
+    fig_cal.add_trace(go.Scatter(
+        x=cal_data["bin_mid"],
+        y=cal_data["actual_rate"] * 100,
+        mode="lines+markers",
+        name="Model (actual win rate)",
+        line=dict(color=BLUE, width=3),
+        marker=dict(size=10, color=BLUE, line=dict(color="white", width=2)),
+        customdata=cal_data[["count","mean_pred"]].values,
+        hovertemplate="Predicted: %{x:.0f}%<br>Actual win rate: %{y:.1f}%<br>"
+                      "Games: %{customdata[0]:.0f}<br>Mean pred: %{customdata[1]:.1f}%<extra></extra>",
+    ))
+
+    fig_cal.update_layout(
+        xaxis=dict(title=dict(text="Predicted Win Probability (%)", font=dict(size=11)),
+                   range=[0,100], gridcolor="#eee"),
+        yaxis=dict(title=dict(text="Actual Win Rate (%)", font=dict(size=11)),
+                   range=[0,100], gridcolor="#eee"),
+        plot_bgcolor="white", paper_bgcolor="white",
+        height=420, margin=dict(t=20,b=50,l=50,r=20),
+        legend=dict(orientation="h", y=-0.2, x=0),
+    )
+    st.plotly_chart(fig_cal, use_container_width=True)
+
+    # Calibration summary stats
+    # Brier score and ECE
+    brier = float(np.mean((cv["pred_prob"] - cv["Label"])**2))
+    # Expected Calibration Error
+    ece = float((cal_data["count"] / cal_data["count"].sum() *
+                 abs(cal_data["actual_rate"] - cal_data["mean_pred"])).sum())
+
+    cal_c1, cal_c2, cal_c3 = st.columns(3)
+    for col, (lbl, val, sub) in zip([cal_c1,cal_c2,cal_c3], [
+        ("Brier Score", f"{brier:.4f}", "Lower = better (0 = perfect)"),
+        ("ECE", f"{ece:.4f}", "Expected Calibration Error (lower = better)"),
+        ("CV Games", f"{len(cv):,}", "Out-of-fold predictions 2008–2025"),
+    ]):
+        with col:
+            st.markdown(f"""
+            <div class="stat-card">
+                <div class="lbl">{lbl}</div>
+                <div class="val">{val}</div>
+                <div class="sub">{sub}</div>
+            </div>""", unsafe_allow_html=True)
+
+    st.write("")
+
+    # ── Log-loss by season ────────────────────────────────────────────────
+    st.markdown(f'<div class="stitle" style="font-size:1.05rem;">Log-Loss by Season</div>',
+                unsafe_allow_html=True)
+    st.caption("Walk-forward validation: each season was held out while model trained on all prior seasons.")
+
+    def safe_logloss(labels, preds):
+        preds_c = np.clip(preds, 1e-6, 1-1e-6)
+        return -np.mean(labels * np.log(preds_c) + (1-labels) * np.log(1-preds_c))
+
+    szn_lls = (cv.groupby("Season")
+                 .apply(lambda g: safe_logloss(g["Label"].values, g["pred_prob"].values),
+                        include_groups=False)
+                 .reset_index(name="logloss"))
+
+    fig_ll = go.Figure(go.Bar(
+        x=szn_lls["Season"], y=szn_lls["logloss"],
+        marker_color=[ORANGE if ll > 0.45 else BLUE for ll in szn_lls["logloss"]],
+        text=[f"{ll:.3f}" for ll in szn_lls["logloss"]],
+        textposition="outside",
+        hovertemplate="Season %{x}: log-loss = %{y:.3f}<extra></extra>",
+    ))
+    fig_ll.add_hline(y=float(szn_lls["logloss"].mean()), line=dict(color=ORANGE, dash="dash"),
+                     annotation_text=f"Mean: {float(szn_lls['logloss'].mean()):.3f}",
+                     annotation_font=dict(color=ORANGE))
+    fig_ll.update_layout(
+        xaxis=dict(title="Season", tickfont=dict(size=11), dtick=1),
+        yaxis=dict(title="Log-Loss", gridcolor="#eee", range=[0, szn_lls["logloss"].max()*1.2]),
+        plot_bgcolor="white", paper_bgcolor="white",
+        height=320, margin=dict(t=20,b=50,l=50,r=20),
+    )
+    st.plotly_chart(fig_ll, use_container_width=True)
+
+    # ── Player Spotlight section ─────────────────────────────────────────
+    st.markdown(f'<div class="stitle" style="font-size:1.05rem;margin-top:8px;">Player Spotlight</div>',
+                unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="info-banner">
+        KenPom-powered roster intelligence: positional height, shooting identity, experience,
+        and what makes each team's players uniquely dangerous entering the tournament.
+        Heights shown as difference from national average at each position (KenPom 2026).
+    </div>""", unsafe_allow_html=True)
+
+    # ── Section A: Top Players by Position Across All Tournament Teams ───
+    st.markdown(f'<div class="stitle" style="font-size:1.05rem;">Elite Size by Position — Tournament Field</div>',
+                unsafe_allow_html=True)
+    st.caption("Which tournament teams have the biggest size advantages? Heights are inches above/below the national average at that position.")
+
+    if not height_exp.empty:
+        # Merge height_exp with tournament teams (strip seed suffix from team names)
+        import re as _re2
+        he_tour = height_exp.copy()
+        he_tour["TeamClean"] = he_tour["Team"].str.replace(r"\s*\d+$", "", regex=True).str.strip()
+        # Match against round_df team names
+        tour_names = set(round_df["TeamName"].str.strip())
+        he_tour_matched = he_tour[he_tour["TeamClean"].isin(tour_names)].copy()
+        he_tour_matched = he_tour_matched.merge(
+            round_df[["TeamName","SeedDisplay","SeedNum","prob_Champion"]].rename(columns={"TeamName":"TeamClean"}),
+            on="TeamClean", how="inner"
+        )
+
+        POSITIONS = [
+            ("C Hgt",  "Center",      "#0021A5"),
+            ("PF Hgt", "Power Forward","#1d4ed8"),
+            ("SF Hgt", "Small Forward","#16a34a"),
+            ("SG Hgt", "Shooting Guard","#d97706"),
+            ("PG Hgt", "Point Guard",  "#7c3aed"),
+        ]
+
+        pos_tabs = st.tabs([p[1] for p in POSITIONS])
+        for tab_pos, (pos_col, pos_name, pos_color) in zip(pos_tabs, POSITIONS):
+            with tab_pos:
+                if pos_col not in he_tour_matched.columns:
+                    st.caption("Data not available.")
+                    continue
+                pos_df = he_tour_matched[["TeamClean","SeedDisplay",pos_col,"Avg Hgt"]].dropna(subset=[pos_col]).copy()
+                pos_df[pos_col] = pd.to_numeric(pos_df[pos_col], errors="coerce")
+                pos_df = pos_df.dropna(subset=[pos_col]).sort_values(pos_col, ascending=False)
+                top10 = pos_df.head(10)
+                labels = [f"({r['SeedDisplay']}) {r['TeamClean']}" for _,r in top10.iterrows()]
+                bar_colors = [pos_color if v >= 0 else "#f87171" for v in top10[pos_col]]
+                fig_pos = go.Figure(go.Bar(
+                    x=labels, y=top10[pos_col],
+                    marker_color=bar_colors,
+                    text=[f"{v:+.1f}\"" for v in top10[pos_col]],
+                    textposition="outside",
+                    hovertemplate="<b>%{x}</b><br>Size advantage: %{y:+.1f} inches<extra></extra>",
+                ))
+                fig_pos.add_hline(y=0, line=dict(color="#9ca3af", width=1))
+                fig_pos.update_layout(
+                    xaxis=dict(tickangle=-30, tickfont=dict(size=10)),
+                    yaxis=dict(title="Inches vs National Avg", gridcolor="#eee"),
+                    plot_bgcolor="white", paper_bgcolor="white",
+                    height=320, margin=dict(t=10,b=70,l=40,r=20),
+                    title=dict(text=f"Top 10 {pos_name} Size Advantages in the Tournament",
+                               font=dict(color=BLUE, size=12)),
+                )
+                st.plotly_chart(fig_pos, use_container_width=True)
+
+                # Show bottom (smallest) for context
+                bottom5 = pos_df.tail(5).sort_values(pos_col)
+                if not bottom5.empty:
+                    st.caption(f"Smallest {pos_name}s: " +
+                               ", ".join([f"{r['TeamClean']} ({r[pos_col]:+.1f}\")"
+                                          for _, r in bottom5.iterrows()]))
+    else:
+        st.caption("Height data not available.")
+
+    # ── Section B: Shooting Identity ─────────────────────────────────────
+    st.write("")
+    st.markdown(f'<div class="stitle" style="font-size:1.05rem;">Shooting Identity — 3-Point Reliance</div>',
+                unsafe_allow_html=True)
+    st.caption("Teams in the top-right live and die by the three. Teams in bottom-right attempt threes often but shoot poorly — high variance. Data: KenPom misc stats.")
+
+    if not misc_stats.empty and "kp_3pt_pct" in misc_stats.columns:
+        ms_tour = misc_stats.copy()
+        ms_tour = ms_tour.merge(
+            round_df[["TeamName","SeedDisplay","SeedNum","prob_Champion"]].rename(columns={"TeamName":"TeamClean"}),
+            on="TeamClean", how="inner"
+        )
+        ms_tour = ms_tour.dropna(subset=["kp_3pt_pct","kp_3pa_rate"])
+
+        if not ms_tour.empty:
+            # Scatter: 3PA rate vs 3P%
+            fig_shoot = go.Figure()
+
+            # Average lines
+            avg_3pa = float(ms_tour["kp_3pa_rate"].mean())
+            avg_3pct = float(ms_tour["kp_3pt_pct"].mean())
+            fig_shoot.add_vline(x=avg_3pa, line=dict(color="#e5e7eb", dash="dash", width=1))
+            fig_shoot.add_hline(y=avg_3pct, line=dict(color="#e5e7eb", dash="dash", width=1))
+
+            # Quadrant labels
+            x_max = ms_tour["kp_3pa_rate"].max()
+            y_max = ms_tour["kp_3pt_pct"].max()
+            fig_shoot.add_annotation(x=x_max*0.92, y=y_max*0.98,
+                text="Elite 3PT teams", font=dict(size=9,color=GREEN), showarrow=False)
+            fig_shoot.add_annotation(x=avg_3pa*0.4, y=avg_3pct*0.97,
+                text="Interior teams", font=dict(size=9,color="#6b7280"), showarrow=False)
+
+            top_spot = set(ms_tour.nlargest(10,"kp_3pt_pct")["TeamClean"].tolist() +
+                           ms_tour.nlargest(10,"kp_3pa_rate")["TeamClean"].tolist() +
+                           ms_tour.nlargest(5,"prob_Champion")["TeamClean"].tolist())
+
+            for _, r in ms_tour.iterrows():
+                is_top = r["TeamClean"] in top_spot
+                sz = max(8, min(30, r["prob_Champion"] * 2000))
+                clr = ORANGE if r["TeamClean"] == "Florida" else (BLUE if is_top else "#d1d5db")
+                lbl = f"({r['SeedDisplay']}) {r['TeamClean']}" if is_top else ""
+                fig_shoot.add_trace(go.Scatter(
+                    x=[r["kp_3pa_rate"]], y=[r["kp_3pt_pct"]],
+                    mode="markers+text" if lbl else "markers",
+                    text=[lbl] if lbl else None,
+                    textposition="top right",
+                    textfont=dict(size=8),
+                    marker=dict(size=sz, color=clr, opacity=0.8,
+                                line=dict(color="white" if is_top else "transparent", width=1.5)),
+                    hovertemplate=f"<b>({r['SeedDisplay']}) {r['TeamClean']}</b><br>"
+                                  f"3P%: {r['kp_3pt_pct']:.1f}%<br>"
+                                  f"3PA Rate: {r['kp_3pa_rate']:.1f}%<br>"
+                                  f"Champ: {r['prob_Champion']*100:.1f}%<extra></extra>",
+                    showlegend=False,
+                ))
+            fig_shoot.update_layout(
+                xaxis=dict(title=dict(text="3-Point Attempt Rate (%)", font=dict(size=11)),
+                           gridcolor="#f0f0f0"),
+                yaxis=dict(title=dict(text="3-Point Shooting % (KenPom)", font=dict(size=11)),
+                           gridcolor="#f0f0f0"),
+                plot_bgcolor="white", paper_bgcolor="white",
+                height=420, margin=dict(l=50,r=30,t=20,b=50),
+            )
+            st.plotly_chart(fig_shoot, use_container_width=True)
+
+            # Top shooters table
+            st.markdown("**Top 3-Point Shooting Teams in the Tournament Field:**")
+            top_shoot = ms_tour.nlargest(10, "kp_3pt_pct")[["TeamClean","SeedDisplay","kp_3pt_pct","kp_3pa_rate"]].copy()
+            top_shoot.columns = ["Team","Seed","3P%","3PA Rate%"]
+            top_shoot = top_shoot.reset_index(drop=True)
+            top_shoot.index = top_shoot.index + 1
+            st.dataframe(top_shoot.style.format({"3P%":"{:.1f}%","3PA Rate%":"{:.1f}%"}),
+                         use_container_width=True, height=320)
+    else:
+        st.caption("Shooting data not available.")
+
+    # ── Section C: Individual Team Spotlight ─────────────────────────────
+    st.write("")
+    st.markdown(f'<div class="stitle" style="font-size:1.05rem;">Individual Team Spotlight</div>',
+                unsafe_allow_html=True)
+
+    spot_team = st.selectbox("Select Team", team_names_sorted, key="spot_team_select")
+
+    # Helper: match a tournament team name to KenPom data
+    def kenpom_match(df, col="TeamClean", name=None):
+        name = name or spot_team
+        m = df[df[col].str.lower().str.strip() == name.lower().strip()]
+        if m.empty:
+            m = df[df[col].str.lower().str.contains(name.lower().split()[0], na=False)].head(1)
+        return m
+
+    spot_row  = stats_df[stats_df["TeamName"] == spot_team]
+    he_match  = kenpom_match(height_exp.assign(TeamClean=height_exp["Team"].str.replace(r"\s*\d+$","",regex=True).str.strip())) if not height_exp.empty else pd.DataFrame()
+    ms_match  = kenpom_match(misc_stats) if not misc_stats.empty else pd.DataFrame()
+
+    if spot_row.empty:
+        st.warning("Team data not found.")
+    else:
+        sr  = spot_row.iloc[0]
+        rd  = round_df[round_df["TeamName"] == spot_team]
+        rd_r = rd.iloc[0] if not rd.empty else None
+
+        # ── Header metrics ─────────────────────────────────────────────
+        h1, h2, h3, h4 = st.columns(4)
+        with h1:
+            adj_em = sr.get("adjEM", None)
+            em_rank = int((stats_df["adjEM"] > adj_em).sum()) + 1 if adj_em is not None else None
+            st.markdown(f"""<div class="stat-card">
+                <div class="lbl">Efficiency Margin</div>
+                <div class="val">{adj_em:+.1f}</div>
+                <div class="sub">#{em_rank} in tournament</div></div>""", unsafe_allow_html=True)
+        with h2:
+            st.markdown(f"""<div class="stat-card">
+                <div class="lbl">Offense (AdjO)</div>
+                <div class="val">{sr.get('adjO','N/A')}</div>
+                <div class="sub">pts per 100 poss (adj)</div></div>""", unsafe_allow_html=True)
+        with h3:
+            st.markdown(f"""<div class="stat-card">
+                <div class="lbl">Defense (AdjD)</div>
+                <div class="val">{sr.get('adjD','N/A')}</div>
+                <div class="sub">opp pts per 100 poss</div></div>""", unsafe_allow_html=True)
+        with h4:
+            three_pct = float(ms_match["kp_3pt_pct"].iloc[0]) if not ms_match.empty and "kp_3pt_pct" in ms_match.columns and pd.notna(ms_match["kp_3pt_pct"].iloc[0]) else None
+            three_rank = None
+            if three_pct is not None and not misc_stats.empty:
+                three_rank = int((misc_stats["kp_3pt_pct"].dropna() > three_pct).sum()) + 1
+            st.markdown(f"""<div class="stat-card">
+                <div class="lbl">3-Point Shooting</div>
+                <div class="val">{f"{three_pct:.1f}%" if three_pct else "N/A"}</div>
+                <div class="sub">{"#"+str(three_rank)+" in nation" if three_rank else ""}</div></div>""",
+                unsafe_allow_html=True)
+
+        st.write("")
+        sc1, sc2 = st.columns(2)
+
+        # ── Positional size chart ──────────────────────────────────────
+        with sc1:
+            st.markdown(f"**Positional Size Profile (vs national avg)**")
+            if not he_match.empty:
+                hr = he_match.iloc[0]
+                pos_names_short = ["PG","SG","SF","PF","C"]
+                pos_cols_map = {"PG":"PG Hgt","SG":"SG Hgt","SF":"SF Hgt","PF":"PF Hgt","C":"C Hgt"}
+                pos_vals, pos_labels, pos_colors_list = [], [], []
+                for p in pos_names_short:
+                    col = pos_cols_map[p]
+                    if col in he_match.columns:
+                        v = pd.to_numeric(hr.get(col, None), errors="coerce")
+                        if pd.notna(v):
+                            pos_vals.append(float(v))
+                            pos_labels.append(p)
+                            pos_colors_list.append(GREEN if v >= 0.5 else ORANGE if v >= -0.5 else "#f87171")
+
+                if pos_vals:
+                    # Add avg height overall
+                    avg_hgt = pd.to_numeric(hr.get("Avg Hgt", None), errors="coerce")
+                    avg_in = int(avg_hgt) // 1
+                    avg_frac = round((avg_hgt % 1) * 12)
+                    avg_str = f"{int(avg_hgt // 12)}'{int(avg_hgt % 12)}\"" if avg_hgt and avg_hgt > 0 else "N/A"
+
+                    fig_pos_team = go.Figure(go.Bar(
+                        x=pos_labels, y=pos_vals,
+                        marker_color=pos_colors_list,
+                        text=[f"{v:+.1f}\"" for v in pos_vals],
+                        textposition="outside",
+                    ))
+                    fig_pos_team.add_hline(y=0, line=dict(color="#9ca3af", width=1.5))
+                    fig_pos_team.update_layout(
+                        yaxis=dict(title="In. vs national avg", gridcolor="#eee", range=[min(pos_vals)-1, max(pos_vals)+1.5]),
+                        xaxis=dict(title="Position"),
+                        plot_bgcolor="white", paper_bgcolor="white",
+                        height=280, margin=dict(t=10,b=30,l=40,r=10),
+                        title=dict(text=f"Avg team height: {avg_str}", font=dict(size=11,color="#666")),
+                    )
+                    st.plotly_chart(fig_pos_team, use_container_width=True)
+
+                    # Experience and Bench
+                    exp_rank = hr.get("Experience", None)
+                    bench    = hr.get("Bench", None)
+                    cont     = hr.get("Continuity", None)
+                    if exp_rank is not None and pd.notna(exp_rank):
+                        total_teams = len(height_exp)
+                        exp_pct = int((total_teams - int(exp_rank)) / total_teams * 100)
+                        st.markdown(
+                            f'<span style="font-size:0.82rem;color:#555;">Experience rank: '
+                            f'<b style="color:{BLUE};">#{int(exp_rank)}</b> nationally '
+                            f'({exp_pct}th percentile)'
+                            + (f'  ·  Bench: <b>{bench}</b> pts+/-' if bench else "")
+                            + (f'  ·  Continuity: <b>#{int(cont)}</b>' if cont else "")
+                            + '</span>',
+                            unsafe_allow_html=True
+                        )
+            else:
+                st.caption("Height data not available for this team.")
+
+        # ── Key player strengths ───────────────────────────────────────
+        with sc2:
+            st.markdown(f"**Offensive Weapons Profile**")
+
+            # Compute percentile for each stat among ALL KenPom teams
+            WEAPON_STATS = [
+                ("adjO",            stats_df,    "adjO",       "Offensive Efficiency",     True),
+                ("adjD",            stats_df,    "adjD",       "Defensive Efficiency",     False),
+                ("wab",             stats_df,    "wab",        "Wins Above Bubble",        True),
+                ("elos",            stats_df,    "elo_pre_tourney","Elo Rating",           True),
+                ("AvgScoreDiff",    stats_df,    "AvgScoreDiff","Avg Scoring Margin",      True),
+                ("barthag",         stats_df,    "barthag",    "Power Rating (Torvik)",    True),
+            ]
+
+            weapons_html = ""
+            for key, df_src, col, label, higher_better in WEAPON_STATS:
+                if col not in df_src.columns: continue
+                team_val_row = df_src[df_src["TeamName"] == spot_team] if "TeamName" in df_src.columns \
+                               else spot_row
+                if team_val_row.empty or col not in team_val_row.columns: continue
+                val = team_val_row[col].iloc[0]
+                if pd.isna(val): continue
+                all_vals = df_src[col].dropna()
+                if higher_better:
+                    pct = (all_vals < val).mean() * 100
+                else:
+                    pct = (all_vals > val).mean() * 100
+                bar_color = GREEN if pct >= 80 else BLUE if pct >= 50 else ORANGE if pct >= 25 else "#f87171"
+                bar_w = int(pct)
+                try:
+                    val_str = f"{val:+.1f}" if abs(val) < 1000 else f"{val:.0f}"
+                except Exception:
+                    val_str = str(val)
+                weapons_html += f"""
+<div style="padding:5px 0;border-bottom:1px solid #f5f5f5;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+    <span style="font-size:0.78rem;color:#555;">{label}</span>
+    <span style="font-size:0.78rem;font-weight:700;color:{bar_color};">{val_str} &nbsp; ({int(pct)}th%ile)</span>
+  </div>
+  <div style="height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden;">
+    <div style="height:6px;width:{bar_w}%;background:{bar_color};border-radius:3px;"></div>
+  </div>
+</div>"""
+
+            # Add 3P% if available
+            if not ms_match.empty and "kp_3pt_pct" in ms_match.columns:
+                val3 = ms_match["kp_3pt_pct"].iloc[0]
+                if pd.notna(val3):
+                    val3 = float(val3)
+                    all3 = misc_stats["kp_3pt_pct"].dropna()
+                    pct3 = (all3 < val3).mean() * 100
+                    bar_color = GREEN if pct3 >= 80 else BLUE if pct3 >= 50 else ORANGE if pct3 >= 25 else "#f87171"
+                    weapons_html += f"""
+<div style="padding:5px 0;border-bottom:1px solid #f5f5f5;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+    <span style="font-size:0.78rem;color:#555;">3-Point Shooting (KenPom)</span>
+    <span style="font-size:0.78rem;font-weight:700;color:{bar_color};">{val3:.1f}% &nbsp; ({int(pct3)}th%ile)</span>
+  </div>
+  <div style="height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden;">
+    <div style="height:6px;width:{int(pct3)}%;background:{bar_color};border-radius:3px;"></div>
+  </div>
+</div>"""
+
+            st.markdown(f'<div style="background:white;border-radius:10px;padding:14px;'
+                        f'box-shadow:0 1px 6px rgba(0,33,165,0.07);border:1px solid #eaeef8;">'
+                        f'{weapons_html}</div>', unsafe_allow_html=True)
+
+        # ── Biggest strengths callout ──────────────────────────────────
+        strengths = []
+        if not he_match.empty:
+            hr = he_match.iloc[0]
+            for p, pcol in [("Center","C Hgt"),("PG","PG Hgt"),("PF","PF Hgt")]:
+                if pcol in he_match.columns:
+                    v = pd.to_numeric(hr.get(pcol, None), errors="coerce")
+                    if pd.notna(v) and float(v) >= 1.5:
+                        strengths.append(f"Elite {p} size ({v:+.1f}\" above avg)")
+        if not ms_match.empty and "kp_3pt_pct" in ms_match.columns:
+            v = ms_match["kp_3pt_pct"].iloc[0]
+            if pd.notna(v) and not misc_stats.empty:
+                rank3 = int((misc_stats["kp_3pt_pct"].dropna() > float(v)).sum()) + 1
+                if rank3 <= 20:
+                    strengths.append(f"Elite 3-point shooting ({v:.1f}%, #{rank3} nationally)")
+        if not spot_row.empty:
+            wab = spot_row["wab"].iloc[0] if "wab" in spot_row.columns else None
+            elo = spot_row["elo_pre_tourney"].iloc[0] if "elo_pre_tourney" in spot_row.columns else None
+            if wab and pd.notna(wab) and float(wab) >= 10:
+                strengths.append(f"Outstanding résumé ({float(wab):+.1f} wins above bubble)")
+            if elo and pd.notna(elo) and float(elo) >= 2050:
+                strengths.append(f"Elite Elo rating ({float(elo):.0f} — top tier)")
+
+        if strengths:
+            strengths_str = "  ·  ".join(strengths)
+            st.markdown(f"""
+<div style="background:{GREEN_BG};border:1px solid {GREEN};border-radius:8px;
+            padding:10px 14px;margin-top:8px;font-size:0.83rem;color:#15803d;">
+  <b>Key Strengths:</b> {strengths_str}
 </div>""", unsafe_allow_html=True)
 
 
