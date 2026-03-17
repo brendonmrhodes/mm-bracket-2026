@@ -21,21 +21,16 @@ ORANGE    = "#FA4616"
 BLUE      = "#0021A5"
 DARK_BLUE = "#001580"
 LIGHT_BG  = "#F4F6FF"
-FAINT     = "#EAEEF8"
+GREEN     = "#16a34a"
+GREEN_BG  = "#f0fdf4"
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def fmt_seed(seed_str: str) -> str:
     """'W01' -> '1', 'X11a' -> '11a', 'Y16b' -> '16b'"""
-    s = seed_str[1:]  # strip region letter
-    if s and s[-1] in "ab":
-        return s.lstrip("0")[:-1].lstrip("0") + s[-1] if len(s) > 1 else s
-    return s.lstrip("0") or "0"
-
-def fmt_seed_clean(seed_str: str) -> str:
-    """Return just the numeric part, ignoring a/b suffix."""
     s = seed_str[1:]
     if s and s[-1] in "ab":
-        s = s[:-1]
+        num = s[:-1].lstrip("0") or "0"
+        return num + s[-1]
     return s.lstrip("0") or "0"
 
 REGION_NAMES = {"W": "East", "X": "South", "Y": "Midwest", "Z": "West"}
@@ -43,141 +38,183 @@ REGION_NAMES = {"W": "East", "X": "South", "Y": "Midwest", "Z": "West"}
 # ── CSS ───────────────────────────────────────────────────────────────────────
 st.markdown(f"""
 <style>
-    html, body, [class*="css"] {{ font-family: -apple-system, BlinkMacSystemFont,
-        'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }}
+    html, body, [class*="css"] {{
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+                     Helvetica, Arial, sans-serif;
+    }}
 
-    /* Hero */
+    /* ── Hero ── */
     .hero {{
         background: linear-gradient(135deg, {BLUE} 0%, {DARK_BLUE} 60%, {ORANGE} 100%);
-        border-radius: 16px;
-        padding: 32px 40px;
-        margin-bottom: 24px;
-        display: flex;
-        align-items: center;
-        gap: 28px;
+        border-radius: 16px; padding: 32px 40px; margin-bottom: 24px;
+        display: flex; align-items: center; gap: 28px;
         box-shadow: 0 8px 32px rgba(0,33,165,0.2);
     }}
-    .hero-logo img {{
-        width: 90px; height: 90px; object-fit: contain;
-        filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
-    }}
-    .hero-text h1 {{
-        color: white; font-size: 2.2rem; font-weight: 800;
-        margin: 0 0 4px; letter-spacing: -0.5px;
-    }}
-    .hero-text p {{ color: rgba(255,255,255,0.82); font-size: 0.95rem; margin: 0; }}
+    .hero-logo img {{ width:90px; height:90px; object-fit:contain;
+        filter:drop-shadow(0 2px 8px rgba(0,0,0,0.3)); }}
+    .hero-text h1 {{ color:white; font-size:2.1rem; font-weight:800;
+        margin:0 0 4px; letter-spacing:-0.5px; }}
+    .hero-text p  {{ color:rgba(255,255,255,0.82); font-size:0.92rem; margin:0; }}
 
-    /* Stat cards */
+    /* ── Stat cards ── */
     .stat-card {{
-        background: white; border-radius: 12px; padding: 18px 22px;
-        border-left: 5px solid {ORANGE};
-        box-shadow: 0 2px 10px rgba(0,33,165,0.07);
+        background:white; border-radius:12px; padding:18px 22px;
+        border-left:5px solid {ORANGE};
+        box-shadow:0 2px 10px rgba(0,33,165,0.07);
     }}
-    .stat-card .lbl {{ font-size: 0.72rem; font-weight: 700; color: #888;
-        text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; }}
-    .stat-card .val {{ font-size: 1.9rem; font-weight: 800; color: {BLUE}; }}
-    .stat-card .sub {{ font-size: 0.8rem; color: #999; margin-top: 2px; }}
+    .stat-card .lbl {{ font-size:0.7rem; font-weight:700; color:#888;
+        text-transform:uppercase; letter-spacing:0.8px; margin-bottom:4px; }}
+    .stat-card .val {{ font-size:1.85rem; font-weight:800; color:{BLUE}; }}
+    .stat-card .sub {{ font-size:0.78rem; color:#999; margin-top:2px; }}
 
-    /* Gator accent cards */
+    /* ── Gator accent cards ── */
     .gator-card {{
-        background: linear-gradient(135deg, {BLUE}, {DARK_BLUE});
-        border-radius: 12px; padding: 18px 22px; color: white;
-        box-shadow: 0 4px 16px rgba(0,33,165,0.22);
+        background:linear-gradient(135deg, {BLUE}, {DARK_BLUE});
+        border-radius:12px; padding:18px 22px; color:white;
+        box-shadow:0 4px 16px rgba(0,33,165,0.22);
     }}
-    .gator-card .lbl {{ font-size: 0.72rem; font-weight: 700;
-        color: rgba(255,255,255,0.65); text-transform: uppercase;
-        letter-spacing: 0.8px; margin-bottom: 4px; }}
-    .gator-card .val {{ font-size: 1.9rem; font-weight: 800; color: {ORANGE}; }}
-    .gator-card .sub {{ font-size: 0.8rem; color: rgba(255,255,255,0.7); margin-top: 2px; }}
+    .gator-card .lbl {{ font-size:0.7rem; font-weight:700;
+        color:rgba(255,255,255,0.65); text-transform:uppercase;
+        letter-spacing:0.8px; margin-bottom:4px; }}
+    .gator-card .val {{ font-size:1.85rem; font-weight:800; color:{ORANGE}; }}
+    .gator-card .sub {{ font-size:0.78rem; color:rgba(255,255,255,0.7); margin-top:2px; }}
 
-    /* Section title */
+    /* ── Section title ── */
     .stitle {{
-        font-size: 1.15rem; font-weight: 800; color: {BLUE};
-        border-bottom: 3px solid {ORANGE};
-        padding-bottom: 6px; margin-bottom: 18px; display: inline-block;
+        font-size:1.1rem; font-weight:800; color:{BLUE};
+        border-bottom:3px solid {ORANGE};
+        padding-bottom:6px; margin-bottom:16px; display:inline-block;
     }}
 
-    /* Info banner */
+    /* ── Info banner ── */
     .info-banner {{
-        background: {LIGHT_BG}; border-radius: 10px;
-        padding: 14px 18px; margin-bottom: 18px;
-        border-left: 4px solid {ORANGE};
+        background:{LIGHT_BG}; border-radius:10px;
+        padding:14px 18px; margin-bottom:16px;
+        border-left:4px solid {ORANGE};
+        font-size:0.88rem;
     }}
 
-    /* Bracket matchup card */
+    /* ── Bracket matchup card ── */
     .mc {{
-        background: white; border-radius: 8px;
-        box-shadow: 0 1px 6px rgba(0,33,165,0.07);
-        margin-bottom: 6px; overflow: hidden;
+        background:white; border-radius:8px;
+        box-shadow:0 1px 6px rgba(0,33,165,0.07);
+        margin-bottom:7px; overflow:hidden;
+        border:1px solid #eaeef8;
     }}
-    .mc-team {{
-        display: flex; align-items: center; padding: 7px 12px; gap: 10px;
-        border-bottom: 1px solid #f0f2f8;
+    /* Winner row */
+    .mc-win {{
+        display:flex; align-items:center; padding:8px 12px; gap:10px;
+        background:{GREEN_BG};
+        border-left:4px solid {GREEN};
     }}
-    .mc-team:last-child {{ border-bottom: none; }}
-    .mc-seed {{
-        font-size: 0.7rem; font-weight: 700; color: white;
-        background: {BLUE}; border-radius: 4px;
-        padding: 2px 5px; min-width: 22px; text-align: center;
-        flex-shrink: 0;
+    /* Loser row */
+    .mc-lose {{
+        display:flex; align-items:center; padding:8px 12px; gap:10px;
+        background:white;
+        border-left:4px solid transparent;
+        border-top:1px solid #f0f2f8;
     }}
-    .mc-seed-hi {{ background: {ORANGE}; }}
-    .mc-name {{ font-size: 0.85rem; font-weight: 600; color: #222; flex: 1; }}
-    .mc-name-gator {{ color: {ORANGE} !important; }}
-    .mc-prob {{ font-size: 0.85rem; font-weight: 700; color: {BLUE};
-        min-width: 38px; text-align: right; }}
-    .mc-bar-wrap {{
-        height: 3px; background: #eef;
+    .mc-seed-win {{
+        font-size:0.68rem; font-weight:800; color:white;
+        background:{GREEN}; border-radius:4px;
+        padding:2px 5px; min-width:22px; text-align:center; flex-shrink:0;
     }}
-    .mc-bar {{ height: 3px; background: {ORANGE}; transition: width 0.3s; }}
+    .mc-seed-lose {{
+        font-size:0.68rem; font-weight:700; color:#bbb;
+        background:#f0f0f0; border-radius:4px;
+        padding:2px 5px; min-width:22px; text-align:center; flex-shrink:0;
+    }}
+    .mc-name-win  {{ font-size:0.85rem; font-weight:700; color:#15803d; flex:1; }}
+    .mc-name-lose {{ font-size:0.85rem; font-weight:500; color:#bbb; flex:1; }}
+    .mc-name-gator-win  {{ color:{ORANGE} !important; }}
+    .mc-name-gator-lose {{ color:{ORANGE} !important; opacity:0.7; }}
+    .mc-prob-win  {{ font-size:0.85rem; font-weight:800; color:{GREEN}; min-width:36px; text-align:right; }}
+    .mc-prob-lose {{ font-size:0.82rem; font-weight:500; color:#ccc; min-width:36px; text-align:right; }}
+    .mc-wins-badge {{
+        font-size:0.62rem; font-weight:800; color:white;
+        background:{GREEN}; border-radius:3px;
+        padding:1px 5px; letter-spacing:0.5px;
+    }}
+    .mc-bar-wrap {{ height:3px; background:#e8f5e9; }}
+    .mc-bar {{ height:3px; background:{GREEN}; }}
 
-    /* Region header */
+    /* ── Region header ── */
     .region-hdr {{
-        background: linear-gradient(90deg, {BLUE}, {DARK_BLUE});
-        color: white; border-radius: 8px 8px 0 0;
-        padding: 8px 14px; font-size: 0.8rem; font-weight: 700;
-        text-transform: uppercase; letter-spacing: 1px;
-        display: flex; justify-content: space-between; align-items: center;
-        margin-bottom: 4px;
+        background:linear-gradient(90deg, {BLUE}, {DARK_BLUE});
+        color:white; border-radius:8px 8px 0 0;
+        padding:9px 14px; font-size:0.78rem; font-weight:800;
+        text-transform:uppercase; letter-spacing:1px;
+        display:flex; justify-content:space-between; align-items:center;
+        margin-bottom:4px;
     }}
-    .region-hdr .fav {{ color: {ORANGE}; font-size: 0.75rem; }}
+    .region-hdr .fav {{ color:{ORANGE}; font-size:0.72rem; font-weight:700; }}
 
-    /* Matchup explorer */
-    .mx-box {{
-        border-radius: 12px; padding: 22px; text-align: center;
-    }}
-    .mx-win {{ background: linear-gradient(135deg, {ORANGE}, #FF7A50); color: white; }}
-    .mx-neutral {{ background: {LIGHT_BG}; border: 2px solid #dde; }}
-    .mx-box .seed-lbl {{
-        font-size: 0.78rem; font-weight: 600; opacity: 0.8; margin-bottom: 4px;
-    }}
-    .mx-box h2 {{ font-size: 1.8rem; font-weight: 800; margin: 0; }}
-    .mx-box .pct {{ font-size: 2.8rem; font-weight: 900; margin: 8px 0; }}
-    .mx-win h2, .mx-win .pct {{ color: white; }}
-    .mx-neutral h2, .mx-neutral .pct {{ color: {BLUE}; }}
-    .mx-box .sub {{ font-size: 0.85rem; opacity: 0.8; }}
+    /* ── Matchup explorer boxes ── */
+    .mx-box {{ border-radius:12px; padding:22px; text-align:center; }}
+    .mx-win  {{ background:linear-gradient(135deg,{ORANGE},#FF7A50); color:white; }}
+    .mx-neutral {{ background:{LIGHT_BG}; border:2px solid #dde; }}
+    .mx-box .seed-lbl {{ font-size:0.75rem; font-weight:600; opacity:0.8; margin-bottom:4px; }}
+    .mx-box h2 {{ font-size:1.75rem; font-weight:800; margin:0; }}
+    .mx-box .pct {{ font-size:2.8rem; font-weight:900; margin:8px 0; }}
+    .mx-win h2, .mx-win .pct {{ color:white; }}
+    .mx-neutral h2, .mx-neutral .pct {{ color:{BLUE}; }}
+    .mx-box .sub {{ font-size:0.83rem; opacity:0.8; }}
 
-    /* Tabs */
+    /* ── Pool strategy EV cards ── */
+    .ev-card {{
+        background:white; border-radius:10px; padding:14px 16px;
+        border-left:5px solid #ddd;
+        box-shadow:0 1px 6px rgba(0,33,165,0.06);
+        margin-bottom:8px;
+        display:flex; align-items:center; gap:12px;
+    }}
+    .ev-card.ev-value  {{ border-left-color:{GREEN}; background:{GREEN_BG}; }}
+    .ev-card.ev-fair   {{ border-left-color:{BLUE}; }}
+    .ev-card.ev-over   {{ border-left-color:#e5e7eb; }}
+    .ev-card .ev-team  {{ flex:1; font-size:0.88rem; font-weight:700; color:{BLUE}; }}
+    .ev-card .ev-seed  {{ font-size:0.72rem; color:#999; font-weight:600; }}
+    .ev-card .ev-ratio {{
+        font-size:1rem; font-weight:800;
+        min-width:48px; text-align:right;
+    }}
+    .ev-card.ev-value  .ev-ratio {{ color:{GREEN}; }}
+    .ev-card.ev-fair   .ev-ratio {{ color:{BLUE}; }}
+    .ev-card.ev-over   .ev-ratio {{ color:#ccc; }}
+    .ev-card .ev-pcts  {{ font-size:0.72rem; color:#999; min-width:80px; text-align:right; }}
+
+    /* ── TABS: underline navigation style ── */
     .stTabs [data-baseweb="tab-list"] {{
-        gap: 4px; background: {LIGHT_BG};
-        padding: 5px; border-radius: 10px;
+        gap: 0;
+        background: white;
+        border-bottom: 2px solid #E0E4F5;
+        padding: 0;
+        border-radius: 0;
+        margin-bottom: 20px;
     }}
     .stTabs [data-baseweb="tab"] {{
-        border-radius: 7px; font-weight: 600; color: {BLUE};
-        font-size: 0.9rem;
+        background: transparent !important;
+        border-radius: 0 !important;
+        font-weight: 600;
+        font-size: 0.92rem;
+        color: #9099bb;
+        padding: 14px 26px;
+        border-bottom: 3px solid transparent;
+        margin-bottom: -2px;
+        letter-spacing: 0.1px;
     }}
     .stTabs [aria-selected="true"] {{
-        background: {ORANGE} !important; color: white !important;
+        background: transparent !important;
+        color: {ORANGE} !important;
+        border-bottom: 3px solid {ORANGE} !important;
+        font-weight: 800 !important;
     }}
 
     /* Footer */
     .footer {{
-        text-align: center; color: #bbb; font-size: 0.78rem;
-        padding: 20px 0 8px; border-top: 1px solid #eee; margin-top: 36px;
+        text-align:center; color:#bbb; font-size:0.77rem;
+        padding:20px 0 8px; border-top:1px solid #eee; margin-top:36px;
     }}
-    #MainMenu {{visibility: hidden;}}
-    footer {{visibility: hidden;}}
-    header {{visibility: hidden;}}
+    #MainMenu {{visibility:hidden;}} footer {{visibility:hidden;}} header {{visibility:hidden;}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -188,7 +225,6 @@ BASE = Path(__file__).parent
 @st.cache_data
 def load_data():
     round_df = pd.read_csv(BASE / "outputs" / "round_probs_2026.csv")
-    pool_df  = pd.read_csv(BASE / "outputs" / "pool_strategy_2026.csv")
     sub_df   = pd.read_csv(BASE / "outputs" / "submission_2026.csv")
     fi_xgb   = pd.read_csv(BASE / "outputs" / "feature_importance_xgb.csv",
                             header=None, names=["feature","importance"])
@@ -206,22 +242,20 @@ def load_data():
         _, t1, t2 = row["ID"].split("_")
         prob_lookup[(int(t1), int(t2))] = float(row["Pred"])
 
-    return round_df, pool_df, fi_xgb, fi_lgb, prob_lookup
+    return round_df, fi_xgb, fi_lgb, prob_lookup
 
-round_df, pool_df, fi_xgb, fi_lgb, prob_lookup = load_data()
+round_df, fi_xgb, fi_lgb, prob_lookup = load_data()
 
-# Clean seed display — add to round_df
 round_df["SeedDisplay"] = round_df["Seed"].apply(fmt_seed)
+round_df["SeedNum"]     = pd.to_numeric(round_df["SeedNum"], errors="coerce").fillna(17).astype(int)
 
-# Seed → TeamID lookup
-seed_to_id   = dict(zip(round_df["Seed"], round_df["TeamID"]))
-id_to_name   = dict(zip(round_df["TeamID"], round_df["TeamName"]))
-id_to_seed   = dict(zip(round_df["TeamID"], round_df["Seed"]))
+seed_to_id        = dict(zip(round_df["Seed"], round_df["TeamID"]))
+id_to_name        = dict(zip(round_df["TeamID"], round_df["TeamName"]))
 id_to_seeddisplay = dict(zip(round_df["TeamID"], round_df["SeedDisplay"]))
+id_to_seednum     = dict(zip(round_df["TeamID"], round_df["SeedNum"]))
 team_names_sorted = sorted(round_df["TeamName"].tolist())
 
 def win_prob(id_a: int, id_b: int) -> float:
-    """P(team_a beats team_b)"""
     key = (min(id_a, id_b), max(id_a, id_b))
     p = prob_lookup.get(key, 0.5)
     return p if id_a < id_b else 1 - p
@@ -229,7 +263,7 @@ def win_prob(id_a: int, id_b: int) -> float:
 def team_row(name: str) -> pd.Series:
     return round_df[round_df["TeamName"] == name].iloc[0]
 
-# ── Feature label mapping ─────────────────────────────────────────────────────
+# ── Feature labels ────────────────────────────────────────────────────────────
 FEAT_LABELS = {
     "d_elo_pre_tourney": "Pre-Tournament Elo Gap",
     "d_adjEM": "Adj. Efficiency Margin Gap",
@@ -250,24 +284,58 @@ FEAT_LABELS = {
     "d_barthag": "BARTHAG Power Rating Gap",
     "d_adjO": "Adj. Offensive Efficiency Gap",
     "d_adjD": "Adj. Defensive Efficiency Gap",
-    "d_rank_POM": "KenPom Ranking Gap",
-    "d_rank_BPI": "ESPN BPI Ranking Gap",
-    "d_rank_NET": "NCAA NET Ranking Gap",
     "t1_adjO": "Team Adj. Offense",
     "t1_SeedNum": "Team Seed",
     "t1_avg_ScoreDiff": "Team Avg Score Margin",
     "t1_elo_late_winpct": "Team Late-Season Win %",
     "t2_elo_pre_tourney": "Opponent Elo Rating",
-    "t2_rank_DOK": "Opponent Dokter Ranking",
-    "t2_sos_adjEM": "Opponent Strength of Schedule",
 }
 def feat_label(f):
     return FEAT_LABELS.get(f,
         f.replace("d_","").replace("t1_","").replace("t2_","")
          .replace("_"," ").title())
 
+# ── Round-specific public pick priors (seed-based, based on historical bracket data) ──
+F4_PRIOR = {
+    1:0.70, 2:0.50, 3:0.32, 4:0.20, 5:0.14, 6:0.09, 7:0.07, 8:0.05,
+    9:0.04, 10:0.03, 11:0.03, 12:0.025, 13:0.012, 14:0.006, 15:0.003, 16:0.001,
+}
+NCG_PRIOR = {
+    1:0.38, 2:0.18, 3:0.11, 4:0.07, 5:0.05, 6:0.03, 7:0.025, 8:0.015,
+    9:0.012, 10:0.010, 11:0.009, 12:0.007, 13:0.003, 14:0.002, 15:0.001, 16:0.0005,
+}
+CHAMP_PRIOR = {
+    1:0.24, 2:0.12, 3:0.07, 4:0.05, 5:0.03, 6:0.02, 7:0.015, 8:0.010,
+    9:0.008, 10:0.007, 11:0.006, 12:0.005, 13:0.003, 14:0.002, 15:0.001, 16:0.0005,
+}
 
-# ── Hero ──────────────────────────────────────────────────────────────────────
+def prior(seed_num: int, priors: dict) -> float:
+    return priors.get(min(seed_num, 16), 0.001)
+
+def build_ev_df():
+    rows = []
+    for _, r in round_df.iterrows():
+        sn = int(r["SeedNum"])
+        rows.append({
+            "Seed":     r["SeedDisplay"],
+            "Team":     r["TeamName"],
+            "SeedNum":  sn,
+            "F4_model":    round(r["prob_F4"] * 100, 1),
+            "F4_public":   round(prior(sn, F4_PRIOR) * 100, 1),
+            "F4_ev":       round(r["prob_F4"] / prior(sn, F4_PRIOR), 2) if prior(sn, F4_PRIOR) > 0 else 0,
+            "NCG_model":   round(r["prob_NCG"] * 100, 1),
+            "NCG_public":  round(prior(sn, NCG_PRIOR) * 100, 1),
+            "NCG_ev":      round(r["prob_NCG"] / prior(sn, NCG_PRIOR), 2) if prior(sn, NCG_PRIOR) > 0 else 0,
+            "Champ_model":  round(r["prob_Champion"] * 100, 1),
+            "Champ_public": round(prior(sn, CHAMP_PRIOR) * 100, 1),
+            "Champ_ev":     round(r["prob_Champion"] / prior(sn, CHAMP_PRIOR), 2) if prior(sn, CHAMP_PRIOR) > 0 else 0,
+        })
+    return pd.DataFrame(rows)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# HERO
+# ══════════════════════════════════════════════════════════════════════════════
 st.markdown("""
 <div class="hero">
     <div class="hero-logo">
@@ -276,40 +344,39 @@ st.markdown("""
     </div>
     <div class="hero-text">
         <h1>2026 NCAA Tournament Predictions</h1>
-        <p>ML ensemble model &nbsp;·&nbsp; XGBoost + LightGBM + Logistic Regression
+        <p>ML ensemble &nbsp;·&nbsp; XGBoost + LightGBM + Logistic Regression
            &nbsp;·&nbsp; 100,000 bracket simulations</p>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-
-# ── Florida Gator spotlight ───────────────────────────────────────────────────
+# Florida spotlight
 gator = round_df[round_df["TeamName"] == "Florida"]
 if not gator.empty:
     g = gator.iloc[0]
     st.markdown('<div class="stitle">Florida Gators — Tournament Outlook</div>',
                 unsafe_allow_html=True)
     c1, c2, c3, c4 = st.columns(4)
-    cards = [
-        ("Seed", g["SeedDisplay"], "South Region"),
-        ("Final Four", f"{g['prob_F4']*100:.1f}%", "Probability of reaching F4"),
-        ("Championship Game", f"{g['prob_NCG']*100:.1f}%", "Probability of reaching NCG"),
-        ("National Champion", f"{g['prob_Champion']*100:.1f}%", "Probability of winning it all"),
-    ]
-    for col, (lbl, val, sub) in zip([c1,c2,c3,c4], cards):
+    for col, (lbl, val, sub) in zip(
+        [c1, c2, c3, c4],
+        [("Seed", g["SeedDisplay"], "South Region"),
+         ("Final Four", f"{g['prob_F4']*100:.1f}%", "Probability of reaching F4"),
+         ("Champ. Game", f"{g['prob_NCG']*100:.1f}%", "Probability of reaching NCG"),
+         ("National Champ.", f"{g['prob_Champion']*100:.1f}%", "Probability of winning it all")]
+    ):
         with col:
             st.markdown(f"""
             <div class="gator-card">
-                <div class="lbl">{lbl}</div>
-                <div class="val">{val}</div>
+                <div class="lbl">{lbl}</div><div class="val">{val}</div>
                 <div class="sub">{sub}</div>
             </div>""", unsafe_allow_html=True)
     st.write("")
 
 st.divider()
 
-
-# ── Tabs ──────────────────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+# TABS
+# ══════════════════════════════════════════════════════════════════════════════
 tab_odds, tab_bracket, tab_matchup, tab_pool, tab_model = st.tabs([
     "Championship Odds",
     "Full Bracket",
@@ -329,13 +396,11 @@ with tab_odds:
     disp = round_df.sort_values("prob_Champion", ascending=False).reset_index(drop=True)
 
     # Top 5 cards
-    top5 = disp.head(5)
     cols5 = st.columns(5)
     medals = ["1st", "2nd", "3rd", "4th", "5th"]
-    for i, (_, row) in enumerate(top5.iterrows()):
+    for i, (_, row) in enumerate(disp.head(5).iterrows()):
         with cols5[i]:
-            is_g = row["TeamName"] == "Florida"
-            cls  = "gator-card" if is_g else "stat-card"
+            cls = "gator-card" if row["TeamName"] == "Florida" else "stat-card"
             st.markdown(f"""
             <div class="{cls}">
                 <div class="lbl">{medals[i]} &nbsp;·&nbsp; Seed {row['SeedDisplay']}</div>
@@ -346,14 +411,13 @@ with tab_odds:
 
     # Bar chart — top 20
     top20 = disp.head(20)
+    labels = [f"({r['SeedDisplay']}) {r['TeamName']}" for _,r in top20.iterrows()]
     colors = [ORANGE if t == "Florida" else BLUE for t in top20["TeamName"]]
-    labels = [f"({row['SeedDisplay']}) {row['TeamName']}" for _, row in top20.iterrows()]
 
     fig = go.Figure(go.Bar(
-        x=labels,
-        y=top20["prob_Champion"] * 100,
+        x=labels, y=top20["prob_Champion"]*100,
         marker_color=colors,
-        text=[f"{v:.1f}%" for v in top20["prob_Champion"] * 100],
+        text=[f"{v:.1f}%" for v in top20["prob_Champion"]*100],
         textposition="outside",
         hovertemplate="<b>%{x}</b><br>Championship: %{y:.1f}%<extra></extra>",
     ))
@@ -362,26 +426,25 @@ with tab_odds:
         xaxis=dict(tickangle=-35, tickfont=dict(size=11)),
         yaxis=dict(title="Championship %", gridcolor="#eee"),
         plot_bgcolor="white", paper_bgcolor="white",
-        height=420, margin=dict(t=50, b=90, l=40, r=20),
+        height=420, margin=dict(t=50,b=90,l=40,r=20),
     )
     st.plotly_chart(fig, use_container_width=True)
 
     # Full table
     st.markdown('<div class="stitle">All Teams — Round-by-Round Probabilities</div>',
                 unsafe_allow_html=True)
-
     tbl = disp[["SeedDisplay","TeamName","prob_F4","prob_NCG","prob_Champion"]].copy()
-    tbl.columns = ["Seed","Team","Final Four %","Championship Game %","Champion %"]
-    for c in ["Final Four %","Championship Game %","Champion %"]:
+    tbl.columns = ["Seed","Team","Final Four %","Champ. Game %","Champion %"]
+    for c in ["Final Four %","Champ. Game %","Champion %"]:
         tbl[c] = (tbl[c] * 100).round(1)
 
     def hl_gator(row):
-        style = f"background-color:{BLUE};color:white;font-weight:bold"
-        return [style]*len(row) if row["Team"] == "Florida" else [""]*len(row)
+        s = f"background-color:{BLUE};color:white;font-weight:bold"
+        return [s]*len(row) if row["Team"] == "Florida" else [""]*len(row)
 
     st.dataframe(
         tbl.style.apply(hl_gator, axis=1).format(
-            {"Final Four %":"{:.1f}%","Championship Game %":"{:.1f}%","Champion %":"{:.1f}%"}
+            {"Final Four %":"{:.1f}%","Champ. Game %":"{:.1f}%","Champion %":"{:.1f}%"}
         ),
         use_container_width=True, height=480,
     )
@@ -392,60 +455,46 @@ with tab_odds:
 # ════════════════════════════════════════════════════════════════════════════
 with tab_bracket:
 
-    # Bracket order: (high_seed_num, low_seed_num)
     BRACKET_PAIRS = [(1,16),(8,9),(5,12),(4,13),(6,11),(3,14),(7,10),(2,15)]
 
-    # Identify First Four seeds (have a/b variants in this year's field)
-    first_four_seeds = {}
+    # Detect First Four slots
+    first_four = {}
     for seed_code, tid in seed_to_id.items():
         if seed_code and seed_code[-1] in "ab":
-            base = seed_code[:-1]  # e.g. "X16"
-            first_four_seeds.setdefault(base, []).append((seed_code, tid))
+            first_four.setdefault(seed_code[:-1], []).append((seed_code, tid))
 
-    def get_team_id(region_letter: str, seed_num: int):
-        """Look up TeamID for a region+seed, handling First Four slots."""
-        code = f"{region_letter}{str(seed_num).zfill(2)}"
-        if code in seed_to_id:
-            return seed_to_id[code], None   # direct lookup
-        # First Four placeholder
-        key = code
-        if key in first_four_seeds:
-            a, b = first_four_seeds[key]
-            return a[1], b[1]   # (team_a_id, team_b_id)
-        return None, None
-
-    def matchup_card_html(id_top, id_bot, id_top2=None, id_bot2=None):
+    def matchup_html(id_top, id_bot, ff_id_a=None, ff_id_b=None):
+        """Return HTML for one first-round matchup card.
+        Green border + badge = model's predicted winner. Gray = loser.
+        ff_id_a/ff_id_b set when one slot is a First Four play-in pair.
         """
-        Render one first-round matchup as HTML.
-        id_top2/id_bot2 are set when the slot is a First Four play-in game.
-        """
-        def team_line(tid, seed_disp, is_fav, is_playin_winner=False):
-            name  = id_to_name.get(tid, "TBD")
-            is_g  = name == "Florida"
-            nc    = "mc-name-gator" if is_g else ""
-            sc    = "mc-seed-hi" if is_fav else ""
-            return (name, seed_disp, nc, sc)
-
-        # Play-in slot: show probability between the two play-in teams
-        if id_top2 is not None:
-            p = win_prob(id_top, id_top2) * 100
-            n1, n2 = id_to_name.get(id_top,"TBD"), id_to_name.get(id_top2,"TBD")
-            s1 = id_to_seeddisplay.get(id_top,"?")
-            s2 = id_to_seeddisplay.get(id_top2,"?")
-            g1 = "mc-name-gator" if n1=="Florida" else ""
-            g2 = "mc-name-gator" if n2=="Florida" else ""
+        # Play-in matchup (two teams competing for one slot)
+        if ff_id_a is not None and ff_id_b is not None:
+            p = win_prob(ff_id_a, ff_id_b) * 100
+            n_a = id_to_name.get(ff_id_a, "TBD")
+            n_b = id_to_name.get(ff_id_b, "TBD")
+            s_a = id_to_seeddisplay.get(ff_id_a, "?")
+            s_b = id_to_seeddisplay.get(ff_id_b, "?")
+            a_wins = p >= 50
+            # top is winner
+            w_id, l_id, p_w, p_l = (ff_id_a, ff_id_b, p, 100-p) if a_wins else (ff_id_b, ff_id_a, 100-p, p)
+            nw = id_to_name.get(w_id,"TBD"); nl = id_to_name.get(l_id,"TBD")
+            sw = id_to_seeddisplay.get(w_id,"?"); sl = id_to_seeddisplay.get(l_id,"?")
+            gw = "mc-name-gator-win" if nw=="Florida" else ""
+            gl = "mc-name-gator-lose" if nl=="Florida" else ""
             return f"""
             <div class="mc">
-              <div class="mc-team">
-                <span class="mc-seed">{s1}</span>
-                <span class="mc-name {g1}">{n1}</span>
-                <span class="mc-prob">{p:.0f}%</span>
+              <div class="mc-win">
+                <span class="mc-seed-win">{sw}</span>
+                <span class="mc-name-win {gw}">{nw}</span>
+                <span class="mc-wins-badge">WINS</span>
+                <span class="mc-prob-win">{p_w:.0f}%</span>
               </div>
-              <div class="mc-bar-wrap"><div class="mc-bar" style="width:{p:.1f}%"></div></div>
-              <div class="mc-team">
-                <span class="mc-seed">{s2}</span>
-                <span class="mc-name {g2}">{n2}</span>
-                <span class="mc-prob">{100-p:.0f}%</span>
+              <div class="mc-bar-wrap"><div class="mc-bar" style="width:{p_w:.1f}%"></div></div>
+              <div class="mc-lose">
+                <span class="mc-seed-lose">{sl}</span>
+                <span class="mc-name-lose {gl}">{nl}</span>
+                <span class="mc-prob-lose">{p_l:.0f}%</span>
               </div>
             </div>"""
 
@@ -453,142 +502,104 @@ with tab_bracket:
             return ""
 
         p = win_prob(id_top, id_bot) * 100
-        n_top, n_bot = id_to_name.get(id_top,"TBD"), id_to_name.get(id_bot,"TBD")
-        s_top = id_to_seeddisplay.get(id_top,"?")
-        s_bot = id_to_seeddisplay.get(id_bot,"?")
-        gt = "mc-name-gator" if n_top=="Florida" else ""
-        gb = "mc-name-gator" if n_bot=="Florida" else ""
-        sc_top = "mc-seed-hi" if p >= 50 else ""
-        sc_bot = "mc-seed-hi" if p < 50 else ""
-
+        top_wins = p >= 50
+        w_id, l_id = (id_top, id_bot) if top_wins else (id_bot, id_top)
+        p_w, p_l   = (p, 100-p) if top_wins else (100-p, p)
+        nw = id_to_name.get(w_id,"TBD"); nl = id_to_name.get(l_id,"TBD")
+        sw = id_to_seeddisplay.get(w_id,"?"); sl = id_to_seeddisplay.get(l_id,"?")
+        gw = "mc-name-gator-win"  if nw=="Florida" else ""
+        gl = "mc-name-gator-lose" if nl=="Florida" else ""
         return f"""
         <div class="mc">
-          <div class="mc-team">
-            <span class="mc-seed {sc_top}">{s_top}</span>
-            <span class="mc-name {gt}">{n_top}</span>
-            <span class="mc-prob">{p:.0f}%</span>
+          <div class="mc-win">
+            <span class="mc-seed-win">{sw}</span>
+            <span class="mc-name-win {gw}">{nw}</span>
+            <span class="mc-wins-badge">WINS</span>
+            <span class="mc-prob-win">{p_w:.0f}%</span>
           </div>
-          <div class="mc-bar-wrap"><div class="mc-bar" style="width:{p:.1f}%"></div></div>
-          <div class="mc-team">
-            <span class="mc-seed {sc_bot}">{s_bot}</span>
-            <span class="mc-name {gb}">{n_bot}</span>
-            <span class="mc-prob">{100-p:.0f}%</span>
+          <div class="mc-bar-wrap"><div class="mc-bar" style="width:{p_w:.1f}%"></div></div>
+          <div class="mc-lose">
+            <span class="mc-seed-lose">{sl}</span>
+            <span class="mc-name-lose {gl}">{nl}</span>
+            <span class="mc-prob-lose">{p_l:.0f}%</span>
           </div>
         </div>"""
 
-    def render_region(region_letter: str):
-        region_name = REGION_NAMES[region_letter]
-        # Find projected region champion (highest F4 prob within region)
-        region_teams = round_df[round_df["Seed"].str.startswith(region_letter)]
-        if not region_teams.empty:
-            fav = region_teams.loc[region_teams["prob_F4"].idxmax()]
-            fav_str = f"Model favorite: {fav['TeamName']} ({fav['prob_F4']*100:.0f}% F4)"
-        else:
-            fav_str = ""
+    def render_region(letter: str) -> str:
+        name = REGION_NAMES[letter]
+        reg_teams = round_df[round_df["Seed"].str.startswith(letter)]
+        fav = reg_teams.loc[reg_teams["prob_F4"].idxmax()] if not reg_teams.empty else None
+        fav_str = f"Model favorite: {fav['TeamName']} ({fav['prob_F4']*100:.0f}% F4)" if fav is not None else ""
 
-        cards_html = f"""
-        <div style="margin-bottom:12px;">
+        html = f"""
+        <div style="margin-bottom:16px;">
           <div class="region-hdr">
-            <span>{region_name} Region</span>
+            <span>{name} Region</span>
             <span class="fav">{fav_str}</span>
           </div>"""
 
-        # Check for First Four games in this region
-        region_ff = {k: v for k, v in first_four_seeds.items() if k.startswith(region_letter)}
-
         for high_s, low_s in BRACKET_PAIRS:
-            slot_code = f"{region_letter}{str(low_s).zfill(2)}"
-            if slot_code in first_four_seeds:
-                # This is a First Four slot
-                pair = first_four_seeds[slot_code]
-                id_a, id_b = pair[0][1], pair[1][1]
-                # High seed is direct
-                high_code = f"{region_letter}{str(high_s).zfill(2)}"
-                id_high = seed_to_id.get(high_code)
+            low_code  = f"{letter}{str(low_s).zfill(2)}"
+            high_code = f"{letter}{str(high_s).zfill(2)}"
 
-                # Show play-in card + main matchup label
-                ff_card = matchup_card_html(id_a, None, id_b, None)
-                main_card = ""
+            if low_code in first_four:
+                # The lower seed slot is a First Four game
+                pair = first_four[low_code]
+                id_a, id_b = pair[0][1], pair[1][1]
+                id_high = seed_to_id.get(high_code)
+                html += matchup_html(None, None, ff_id_a=id_a, ff_id_b=id_b)
+                # Show high seed separately as "awaiting play-in winner"
                 if id_high:
-                    n_high = id_to_name.get(id_high,"TBD")
-                    gh = "mc-name-gator" if n_high=="Florida" else ""
-                    s_high = id_to_seeddisplay.get(id_high,"?")
-                    main_card = f"""
-                    <div class="mc">
-                      <div class="mc-team">
-                        <span class="mc-seed mc-seed-hi">{s_high}</span>
-                        <span class="mc-name {gh}">{n_high}</span>
-                        <span class="mc-prob" style="color:#aaa;font-size:0.75rem;">vs winner</span>
+                    nh = id_to_name.get(id_high,"TBD")
+                    sh = id_to_seeddisplay.get(id_high,"?")
+                    gh = "mc-name-gator-lose" if nh=="Florida" else ""
+                    html += f"""
+                    <div class="mc" style="margin-bottom:12px;">
+                      <div class="mc-win" style="background:#f8f9ff;border-left-color:{BLUE}">
+                        <span class="mc-seed-win" style="background:{BLUE}">{sh}</span>
+                        <span class="mc-name-win {gh}" style="color:{BLUE}">{nh}</span>
+                        <span style="font-size:0.72rem;color:#aaa;margin-left:auto">
+                          vs. play-in winner
+                        </span>
                       </div>
                     </div>"""
-                cards_html += ff_card + main_card
             else:
-                # Normal matchup
-                high_code = f"{region_letter}{str(high_s).zfill(2)}"
-                low_code  = f"{region_letter}{str(low_s).zfill(2)}"
                 id_high = seed_to_id.get(high_code)
                 id_low  = seed_to_id.get(low_code)
-                cards_html += matchup_card_html(id_high, id_low)
+                html += matchup_html(id_high, id_low)
 
-        cards_html += "</div>"
-        return cards_html
+        html += "</div>"
+        return html
 
-    # First Four section
-    ff_items = sorted(first_four_seeds.items())
+    # First Four
+    ff_items = sorted(first_four.items())
     if ff_items:
         st.markdown('<div class="stitle">First Four — Play-In Games</div>',
                     unsafe_allow_html=True)
         ff_cols = st.columns(len(ff_items))
-        for col, (base_code, pair) in zip(ff_cols, ff_items):
+        for col, (base, pair) in zip(ff_cols, ff_items):
             with col:
                 id_a, id_b = pair[0][1], pair[1][1]
-                p = win_prob(id_a, id_b) * 100
-                n_a = id_to_name.get(id_a,"TBD")
-                n_b = id_to_name.get(id_b,"TBD")
-                s_a = id_to_seeddisplay.get(id_a,"?")
-                s_b = id_to_seeddisplay.get(id_b,"?")
-                region_name = REGION_NAMES.get(base_code[0], "")
-                seed_num    = base_code[1:].lstrip("0")
-                ga = "mc-name-gator" if n_a=="Florida" else ""
-                gb = "mc-name-gator" if n_b=="Florida" else ""
-                sc_a = "mc-seed-hi" if p >= 50 else ""
-                sc_b = "mc-seed-hi" if p < 50 else ""
+                region_name = REGION_NAMES.get(base[0], "")
+                seed_num    = base[1:].lstrip("0")
                 st.markdown(f"""
-                <div style="margin-bottom:8px;">
-                  <div style="font-size:0.72rem;font-weight:700;color:{BLUE};
-                              text-transform:uppercase;letter-spacing:0.8px;
-                              margin-bottom:4px;">{region_name} · Seed {seed_num} Play-In</div>
-                  <div class="mc">
-                    <div class="mc-team">
-                      <span class="mc-seed {sc_a}">{s_a}</span>
-                      <span class="mc-name {ga}">{n_a}</span>
-                      <span class="mc-prob">{p:.0f}%</span>
-                    </div>
-                    <div class="mc-bar-wrap"><div class="mc-bar" style="width:{p:.1f}%"></div></div>
-                    <div class="mc-team">
-                      <span class="mc-seed {sc_b}">{s_b}</span>
-                      <span class="mc-name {gb}">{n_b}</span>
-                      <span class="mc-prob">{100-p:.0f}%</span>
-                    </div>
-                  </div>
-                </div>""", unsafe_allow_html=True)
+                <div style="font-size:0.7rem;font-weight:700;color:{BLUE};
+                    text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;">
+                  {region_name} · Seed {seed_num} Play-In
+                </div>
+                {matchup_html(None, None, ff_id_a=id_a, ff_id_b=id_b)}
+                """, unsafe_allow_html=True)
 
     st.write("")
-    st.markdown('<div class="stitle">First Round Matchups by Region</div>',
-                unsafe_allow_html=True)
-    st.caption("Seed highlighted in orange = model's predicted winner. Florida Gators shown in orange.")
+    st.markdown('<div class="stitle">First Round by Region</div>', unsafe_allow_html=True)
+    st.caption("Green = model's predicted winner. Probability shown for the predicted winning team.")
 
-    col_ew, col_sx = st.columns(2)
-    col_mw, col_wt = st.columns(2)
-
-    with col_ew:
-        st.markdown(render_region("W"), unsafe_allow_html=True)
-    with col_sx:
-        st.markdown(render_region("X"), unsafe_allow_html=True)
-    with col_mw:
-        st.markdown(render_region("Y"), unsafe_allow_html=True)
-    with col_wt:
-        st.markdown(render_region("Z"), unsafe_allow_html=True)
+    col_e, col_s = st.columns(2)
+    col_m, col_w = st.columns(2)
+    with col_e: st.markdown(render_region("W"), unsafe_allow_html=True)
+    with col_s: st.markdown(render_region("X"), unsafe_allow_html=True)
+    with col_m: st.markdown(render_region("Y"), unsafe_allow_html=True)
+    with col_w: st.markdown(render_region("Z"), unsafe_allow_html=True)
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -612,11 +623,9 @@ with tab_matchup:
     if team_a == team_b:
         st.warning("Select two different teams.")
     else:
-        id_a = team_row(team_a)["TeamID"]
-        id_b = team_row(team_b)["TeamID"]
-        p_a = win_prob(int(id_a), int(id_b))
-        p_b = 1 - p_a
         ra, rb = team_row(team_a), team_row(team_b)
+        p_a = win_prob(int(ra["TeamID"]), int(rb["TeamID"]))
+        p_b = 1 - p_a
 
         st.write("")
         ca, cv, cb = st.columns([5,1,5])
@@ -624,37 +633,38 @@ with tab_matchup:
             cls = "mx-box mx-win" if p_a > 0.5 else "mx-box mx-neutral"
             st.markdown(f"""
             <div class="{cls}">
-                <div class="seed-lbl">Seed {ra['SeedDisplay']} · {REGION_NAMES.get(ra['Seed'][0],'')}</div>
-                <h2>{team_a}</h2>
-                <div class="pct">{p_a*100:.1f}%</div>
-                <div class="sub">win probability</div>
+              <div class="seed-lbl">
+                Seed {ra['SeedDisplay']} · {REGION_NAMES.get(ra['Seed'][0],'')}
+              </div>
+              <h2>{team_a}</h2>
+              <div class="pct">{p_a*100:.1f}%</div>
+              <div class="sub">win probability</div>
             </div>""", unsafe_allow_html=True)
         with cv:
             st.markdown(f"""
             <div style="display:flex;align-items:center;justify-content:center;
-                        height:170px;font-size:1.3rem;font-weight:800;color:#bbb;">
-                vs
-            </div>""", unsafe_allow_html=True)
+                        height:170px;font-size:1.2rem;font-weight:800;color:#ccc;">vs</div>
+            """, unsafe_allow_html=True)
         with cb:
             cls = "mx-box mx-win" if p_b > 0.5 else "mx-box mx-neutral"
             st.markdown(f"""
             <div class="{cls}">
-                <div class="seed-lbl">Seed {rb['SeedDisplay']} · {REGION_NAMES.get(rb['Seed'][0],'')}</div>
-                <h2>{team_b}</h2>
-                <div class="pct">{p_b*100:.1f}%</div>
-                <div class="sub">win probability</div>
+              <div class="seed-lbl">
+                Seed {rb['SeedDisplay']} · {REGION_NAMES.get(rb['Seed'][0],'')}
+              </div>
+              <h2>{team_b}</h2>
+              <div class="pct">{p_b*100:.1f}%</div>
+              <div class="sub">win probability</div>
             </div>""", unsafe_allow_html=True)
 
         st.write("")
 
-        # Probability bar
         fig_bar = go.Figure(go.Bar(
             x=[p_a*100, p_b*100], y=[team_a, team_b], orientation="h",
             marker_color=[ORANGE if team_a=="Florida" else BLUE,
                           ORANGE if team_b=="Florida" else "#5566CC"],
             text=[f"{p_a*100:.1f}%", f"{p_b*100:.1f}%"],
-            textposition="inside",
-            textfont=dict(color="white", size=13),
+            textposition="inside", textfont=dict(color="white", size=13),
         ))
         fig_bar.update_layout(
             xaxis=dict(range=[0,100], ticksuffix="%", gridcolor="#eee"),
@@ -664,10 +674,9 @@ with tab_matchup:
         )
         st.plotly_chart(fig_bar, use_container_width=True)
 
-        # Bracket path comparison
         st.markdown('<div class="stitle">Bracket Path Comparison</div>',
                     unsafe_allow_html=True)
-        rounds_labels = ["Final Four", "Championship Game", "Champion"]
+        rounds_labels = ["Final Four","Championship Game","Champion"]
         rounds_cols   = ["prob_F4","prob_NCG","prob_Champion"]
 
         fig_cmp = go.Figure()
@@ -695,68 +704,91 @@ with tab_matchup:
 
 
 # ════════════════════════════════════════════════════════════════════════════
-# TAB 4 — Pool Strategy
+# TAB 4 — Pool Strategy (per-round EV)
 # ════════════════════════════════════════════════════════════════════════════
 with tab_pool:
-    st.markdown('<div class="stitle">Bracket Pool Strategy — Expected Value Analysis</div>',
+    st.markdown('<div class="stitle">Bracket Pool Strategy — Round-by-Round Value</div>',
                 unsafe_allow_html=True)
     st.markdown(f"""
     <div class="info-banner">
-        <b style="color:{BLUE}">How to read this:</b>
-        The <b>EV Ratio</b> compares the model's championship probability against the estimated
-        public pick percentage (based on historical seed selection patterns). An EV above 1.0
-        means the team wins more often than the public expects —
-        <b>EV &gt; 1.3 is a high-value pick</b> in large pools.
+        <b style="color:{BLUE}">How to read this:</b> Each round has its own EV ratio —
+        the model's probability divided by the estimated public pick rate for that round.
+        <b>EV &gt; 1.2 = undervalued</b> (pick more often than the public expects).
+        <b>EV &lt; 0.8 = overvalued</b> (public picks them too much relative to model).
+        Use these picks to differentiate your bracket from the field.
     </div>""", unsafe_allow_html=True)
 
-    pool_disp = pool_df.copy().sort_values("EV_ratio", ascending=False)
-    pool_disp["Assessment"] = pool_disp["EV_ratio"].apply(
-        lambda x: "High Value" if x > 1.3 else ("Fair" if x > 0.9 else "Overvalued")
-    )
+    ev_df = build_ev_df()
 
-    top_pool = pool_disp[pool_disp["Model%"] >= 1.0].head(16)
-    bar_colors = []
-    for _, row in top_pool.iterrows():
-        if row["Team"] == "Florida":        bar_colors.append(ORANGE)
-        elif row["EV_ratio"] > 1.3:         bar_colors.append("#16a34a")
-        elif row["EV_ratio"] < 0.9:         bar_colors.append("#dc2626")
-        else:                               bar_colors.append(BLUE)
+    def ev_cards(df_sorted, model_col, public_col, ev_col, min_model_pct=1.0, top_n=10):
+        """Render EV pick cards for one round."""
+        shown = df_sorted[df_sorted[model_col] >= min_model_pct].head(top_n)
+        html = ""
+        for _, r in shown.iterrows():
+            ev = r[ev_col]
+            cls = "ev-value" if ev > 1.2 else ("ev-fair" if ev > 0.8 else "ev-over")
+            label = "Value" if ev > 1.2 else ("Fair" if ev > 0.8 else "Avoid")
+            html += f"""
+            <div class="ev-card {cls}">
+              <div>
+                <div class="ev-team">{r['Team']}</div>
+                <div class="ev-seed">Seed {r['Seed']}</div>
+              </div>
+              <div class="ev-pcts">
+                Model: {r[model_col]:.1f}%<br>
+                Public: {r[public_col]:.1f}%
+              </div>
+              <div class="ev-ratio">{ev:.2f}x<br>
+                <span style="font-size:0.65rem;font-weight:600;">{label}</span>
+              </div>
+            </div>"""
+        return html
 
-    fig_ev = go.Figure(go.Bar(
-        x=top_pool["Team"], y=top_pool["EV_ratio"],
-        marker_color=bar_colors,
-        text=[f"{v:.2f}x" for v in top_pool["EV_ratio"]],
-        textposition="outside",
-        hovertemplate="<b>%{x}</b><br>EV: %{y:.2f}x<extra></extra>",
-    ))
-    fig_ev.add_hline(y=1.0, line_dash="dash", line_color="#bbb",
-                     annotation_text="Breakeven", annotation_position="top right")
-    fig_ev.add_hline(y=1.3, line_dash="dot", line_color="#16a34a",
-                     annotation_text="High value", annotation_position="top right")
-    fig_ev.update_layout(
-        title=dict(text="Expected Value by Team (model pick% ÷ estimated public pick%)",
-                   font=dict(color=BLUE, size=14)),
-        xaxis=dict(tickangle=-30, tickfont=dict(size=11)),
-        yaxis=dict(title="EV Ratio", gridcolor="#eee"),
-        plot_bgcolor="white", paper_bgcolor="white",
-        height=400, margin=dict(t=50,b=80,l=40,r=20),
-    )
-    st.plotly_chart(fig_ev, use_container_width=True)
+    col_f4, col_ncg, col_champ = st.columns(3)
 
-    st.markdown('<div class="stitle">Full EV Table</div>', unsafe_allow_html=True)
+    with col_f4:
+        st.markdown(f'<div class="stitle">Final Four</div>', unsafe_allow_html=True)
+        df_f4 = ev_df.sort_values("F4_ev", ascending=False)
+        st.markdown(ev_cards(df_f4, "F4_model", "F4_public", "F4_ev", min_model_pct=5.0),
+                    unsafe_allow_html=True)
 
-    def color_ev_cell(val):
+    with col_ncg:
+        st.markdown(f'<div class="stitle">Championship Game</div>', unsafe_allow_html=True)
+        df_ncg = ev_df.sort_values("NCG_ev", ascending=False)
+        st.markdown(ev_cards(df_ncg, "NCG_model", "NCG_public", "NCG_ev", min_model_pct=2.0),
+                    unsafe_allow_html=True)
+
+    with col_champ:
+        st.markdown(f'<div class="stitle">Champion</div>', unsafe_allow_html=True)
+        df_champ = ev_df.sort_values("Champ_ev", ascending=False)
+        st.markdown(ev_cards(df_champ, "Champ_model", "Champ_public", "Champ_ev", min_model_pct=1.0),
+                    unsafe_allow_html=True)
+
+    st.write("")
+    st.markdown('<div class="stitle">Full EV Table — All Rounds</div>',
+                unsafe_allow_html=True)
+    st.caption("EV = Model probability ÷ estimated public pick rate for that round. Green = undervalued, red = overvalued.")
+
+    full_tbl = ev_df[["Seed","Team",
+                       "F4_model","F4_public","F4_ev",
+                       "NCG_model","NCG_public","NCG_ev",
+                       "Champ_model","Champ_public","Champ_ev"]].copy()
+    full_tbl.columns = ["Seed","Team",
+                         "F4 Model%","F4 Public%","F4 EV",
+                         "NCG Model%","NCG Public%","NCG EV",
+                         "Champ Model%","Champ Public%","Champ EV"]
+
+    def color_ev(v):
         try:
-            v = float(val)
-            if v > 1.3: return "color:#15803d;font-weight:bold"
-            if v < 0.9: return "color:#dc2626;font-weight:bold"
+            f = float(v)
+            if f > 1.2: return "color:#15803d;font-weight:bold"
+            if f < 0.8: return "color:#dc2626"
         except: pass
         return ""
 
-    tbl_pool = pool_disp[["Seed","Team","Model%","Field%","EV_ratio","F4%","Assessment"]].copy()
-    tbl_pool.columns = ["Seed","Team","Model Champ %","Est. Public %","EV Ratio","Final Four %","Assessment"]
     st.dataframe(
-        tbl_pool.style.applymap(color_ev_cell, subset=["EV Ratio"]),
+        full_tbl.sort_values("Champ EV", ascending=False)
+               .style.applymap(color_ev, subset=["F4 EV","NCG EV","Champ EV"]),
         use_container_width=True, height=480,
     )
 
@@ -765,14 +797,14 @@ with tab_pool:
 # TAB 5 — Model Insights
 # ════════════════════════════════════════════════════════════════════════════
 with tab_model:
-    st.markdown('<div class="stitle">What the Model Looks At</div>', unsafe_allow_html=True)
+    st.markdown('<div class="stitle">What the Model Looks At</div>',
+                unsafe_allow_html=True)
     st.markdown(f"""
     <div class="info-banner">
-        The model is a weighted ensemble of <b>XGBoost</b> (45%), <b>LightGBM</b> (45%), and
-        <b>Logistic Regression</b> (10%), trained on every NCAA tournament game since 2002 using
-        walk-forward cross-validation. Features include KenPom efficiency ratings, Torvik T-Rank,
-        Elo ratings with recency momentum, Massey composite rankings, and Four Factors from
-        40+ years of box scores — totaling 153 features per matchup.
+        A weighted ensemble of <b>XGBoost</b> (45%), <b>LightGBM</b> (45%), and
+        <b>Logistic Regression</b> (10%), trained on every NCAA tournament game since 2002
+        using walk-forward cross-validation (no future data leakage). 153 features per matchup
+        spanning efficiency ratings, Elo momentum, strength of schedule, and shot quality.
     </div>""", unsafe_allow_html=True)
 
     def fi_chart(df, title, color):
@@ -803,26 +835,23 @@ with tab_model:
 
     st.markdown('<div class="stitle">Model Performance</div>', unsafe_allow_html=True)
     p1, p2, p3 = st.columns(3)
-    perf = [
+    for col, (lbl, val, sub) in zip([p1,p2,p3], [
         ("Walk-Forward CV Accuracy", "86.6%", "Tested on 2010–2025 tournaments"),
         ("Log-Loss (CV)", "0.320", "Lower is better — Kaggle scoring metric"),
         ("Bracket Simulations", "100,000", "Monte Carlo runs per prediction set"),
-    ]
-    for col, (lbl,val,sub) in zip([p1,p2,p3], perf):
+    ]):
         with col:
             st.markdown(f"""
             <div class="stat-card">
-                <div class="lbl">{lbl}</div>
-                <div class="val">{val}</div>
+                <div class="lbl">{lbl}</div><div class="val">{val}</div>
                 <div class="sub">{sub}</div>
             </div>""", unsafe_allow_html=True)
 
     st.markdown(f"""
-    <div class="info-banner" style="margin-top:18px; border-left-color:{BLUE};">
-        <b style="color:{BLUE}">Data sources:</b>
-        KenPom (2002–2026) · Torvik T-Rank (2008–2026) · Kaggle NCAA box scores (1985–2026) ·
-        Massey Ordinals composite from 10 rating systems · FiveThirtyEight-style Elo with
-        margin-of-victory multiplier and recency momentum features.
+    <div class="info-banner" style="margin-top:18px;border-left-color:{BLUE};">
+        <b style="color:{BLUE}">Data sources:</b> KenPom (2002–2026) · Torvik T-Rank (2008–2026) ·
+        Kaggle NCAA box scores (1985–2026) · Massey Ordinals from 10 rating systems ·
+        FiveThirtyEight-style Elo with margin-of-victory multiplier and recency momentum.
     </div>""", unsafe_allow_html=True)
 
 
