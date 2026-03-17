@@ -430,22 +430,23 @@ with tab_odds:
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    # Full table
+    # Full table — all rounds
     st.markdown('<div class="stitle">All Teams — Round-by-Round Probabilities</div>',
                 unsafe_allow_html=True)
-    tbl = disp[["SeedDisplay","TeamName","prob_F4","prob_NCG","prob_Champion"]].copy()
-    tbl.columns = ["Seed","Team","Final Four %","Champ. Game %","Champion %"]
-    for c in ["Final Four %","Champ. Game %","Champion %"]:
+    tbl = disp[["SeedDisplay","TeamName",
+                "prob_R32","prob_S16","prob_E8","prob_F4","prob_NCG","prob_Champion"]].copy()
+    tbl.columns = ["Seed","Team","Round of 32","Sweet 16","Elite 8",
+                   "Final Four","Champ. Game","Champion"]
+    for c in tbl.columns[2:]:
         tbl[c] = (tbl[c] * 100).round(1)
 
     def hl_gator(row):
         s = f"background-color:{BLUE};color:white;font-weight:bold"
         return [s]*len(row) if row["Team"] == "Florida" else [""]*len(row)
 
+    fmt = {c: "{:.1f}%" for c in tbl.columns[2:]}
     st.dataframe(
-        tbl.style.apply(hl_gator, axis=1).format(
-            {"Final Four %":"{:.1f}%","Champ. Game %":"{:.1f}%","Champion %":"{:.1f}%"}
-        ),
+        tbl.style.apply(hl_gator, axis=1).format(fmt),
         use_container_width=True, height=480,
     )
 
@@ -462,6 +463,11 @@ with tab_bracket:
     for seed_code, tid in seed_to_id.items():
         if seed_code and seed_code[-1] in "ab":
             first_four.setdefault(seed_code[:-1], []).append((seed_code, tid))
+
+    def weighted_prob(id_high, id_a, id_b):
+        """P(id_high wins R1) weighted over both possible play-in outcomes."""
+        p_a = win_prob(id_a, id_b)
+        return p_a * win_prob(id_high, id_a) + (1 - p_a) * win_prob(id_high, id_b)
 
     def matchup_html(id_top, id_bot, ff_id_a=None, ff_id_b=None):
         """Return HTML for one first-round matchup card.
@@ -547,22 +553,24 @@ with tab_bracket:
                 pair = first_four[low_code]
                 id_a, id_b = pair[0][1], pair[1][1]
                 id_high = seed_to_id.get(high_code)
+
+                # ① Play-in matchup
+                html += f"""
+                <div style="font-size:0.68rem;font-weight:700;color:#aaa;
+                    text-transform:uppercase;letter-spacing:0.6px;
+                    margin:6px 0 3px 2px;">Play-In Game</div>"""
                 html += matchup_html(None, None, ff_id_a=id_a, ff_id_b=id_b)
-                # Show high seed separately as "awaiting play-in winner"
+
+                # ② First round: high seed vs likely play-in winner
                 if id_high:
-                    nh = id_to_name.get(id_high,"TBD")
-                    sh = id_to_seeddisplay.get(id_high,"?")
-                    gh = "mc-name-gator-lose" if nh=="Florida" else ""
+                    p_a = win_prob(id_a, id_b)
+                    likely_opp = id_a if p_a >= 0.5 else id_b
+                    p_high = weighted_prob(id_high, id_a, id_b)
                     html += f"""
-                    <div class="mc" style="margin-bottom:12px;">
-                      <div class="mc-win" style="background:#f8f9ff;border-left-color:{BLUE}">
-                        <span class="mc-seed-win" style="background:{BLUE}">{sh}</span>
-                        <span class="mc-name-win {gh}" style="color:{BLUE}">{nh}</span>
-                        <span style="font-size:0.72rem;color:#aaa;margin-left:auto">
-                          vs. play-in winner
-                        </span>
-                      </div>
-                    </div>"""
+                    <div style="font-size:0.68rem;font-weight:700;color:#aaa;
+                        text-transform:uppercase;letter-spacing:0.6px;
+                        margin:6px 0 3px 2px;">Round 1 (projected)</div>"""
+                    html += matchup_html(id_high, likely_opp)
             else:
                 id_high = seed_to_id.get(high_code)
                 id_low  = seed_to_id.get(low_code)
