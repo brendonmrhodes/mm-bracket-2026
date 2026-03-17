@@ -467,7 +467,7 @@ st.divider()
 # ══════════════════════════════════════════════════════════════════════════════
 # TABS
 # ══════════════════════════════════════════════════════════════════════════════
-tab_odds, tab_bracket, tab_matchup, tab_pool, tab_dna, tab_upset, tab_model, tab_optimizer, tab_deepdive, tab_hot, tab_calibration = st.tabs([
+tab_odds, tab_bracket, tab_matchup, tab_pool, tab_dna, tab_upset, tab_model, tab_optimizer, tab_deepdive, tab_hot, tab_calibration, tab_spotlight = st.tabs([
     "Championship Odds",
     "Full Bracket",
     "Matchup Explorer",
@@ -479,6 +479,7 @@ tab_odds, tab_bracket, tab_matchup, tab_pool, tab_dna, tab_upset, tab_model, tab
     "Team Deep-Dive",
     "Hot Streaks & Busters",
     "Model Calibration",
+    "Player Spotlight",
 ])
 
 
@@ -2706,14 +2707,21 @@ with tab_calibration:
     )
     st.plotly_chart(fig_ll, use_container_width=True)
 
-    # ── Player Spotlight section ─────────────────────────────────────────
-    st.markdown(f'<div class="stitle" style="font-size:1.05rem;margin-top:8px;">Player Spotlight</div>',
-                unsafe_allow_html=True)
-    st.markdown(f"""
+    # (Player Spotlight moved to its own tab below)
+
+
+# ── Footer ────
+
+# ════════════════════════════════════════════════════════════════════════════
+# TAB 12 — Player Spotlight
+# ════════════════════════════════════════════════════════════════════════════
+with tab_spotlight:
+    st.markdown('<div class="stitle">Player Spotlight</div>', unsafe_allow_html=True)
+    st.markdown("""
     <div class="info-banner">
         KenPom-powered roster intelligence: positional height, shooting identity, experience,
-        and what makes each team's players uniquely dangerous entering the tournament.
-        Heights shown as difference from national average at each position (KenPom 2026).
+        and what makes each team uniquely dangerous entering the tournament.
+        Heights shown as inches above/below the national average at each position (KenPom 2026).
     </div>""", unsafe_allow_html=True)
 
     # ── Section A: Top Players by Position Across All Tournament Teams ───
@@ -2750,7 +2758,12 @@ with tab_calibration:
                     continue
                 pos_df = he_tour_matched[["TeamClean","SeedDisplay",pos_col,"Avg Hgt"]].dropna(subset=[pos_col]).copy()
                 pos_df[pos_col] = pd.to_numeric(pos_df[pos_col], errors="coerce")
-                pos_df = pos_df.dropna(subset=[pos_col]).sort_values(pos_col, ascending=False)
+                # Keep only true height-delta values (−10 to +10 inches); filter out rank columns (1–365)
+                pos_df = pos_df[pos_df[pos_col].abs() <= 10].dropna(subset=[pos_col])
+                if pos_df.empty:
+                    st.caption("Height delta data not available for this position in the current dataset.")
+                    continue
+                pos_df = pos_df.sort_values(pos_col, ascending=False)
                 top10 = pos_df.head(10)
                 labels = [f"({r['SeedDisplay']}) {r['TeamClean']}" for _,r in top10.iterrows()]
                 bar_colors = [pos_color if v >= 0 else "#f87171" for v in top10[pos_col]]
@@ -2766,9 +2779,9 @@ with tab_calibration:
                     xaxis=dict(tickangle=-30, tickfont=dict(size=10)),
                     yaxis=dict(title="Inches vs National Avg", gridcolor="#eee"),
                     plot_bgcolor="white", paper_bgcolor="white",
-                    height=320, margin=dict(t=10,b=70,l=40,r=20),
+                    height=360, margin=dict(t=52,b=80,l=40,r=20),
                     title=dict(text=f"Top 10 {pos_name} Size Advantages in the Tournament",
-                               font=dict(color=BLUE, size=12)),
+                               font=dict(color=BLUE, size=13)),
                 )
                 st.plotly_chart(fig_pos, use_container_width=True)
 
@@ -2884,23 +2897,32 @@ with tab_calibration:
         rd_r = rd.iloc[0] if not rd.empty else None
 
         # ── Header metrics ─────────────────────────────────────────────
+        def _safe(val):
+            """Return None if val is NaN/None, else the value."""
+            try:
+                return None if pd.isna(val) else val
+            except Exception:
+                return val
+
         h1, h2, h3, h4 = st.columns(4)
         with h1:
-            adj_em = sr.get("adjEM", None)
-            em_rank = int((stats_df["adjEM"] > adj_em).sum()) + 1 if adj_em is not None else None
+            adj_em = _safe(sr.get("adjEM", None))
+            em_rank = int((stats_df["adjEM"].dropna() > adj_em).sum()) + 1 if adj_em is not None else None
             st.markdown(f"""<div class="stat-card">
                 <div class="lbl">Efficiency Margin</div>
-                <div class="val">{adj_em:+.1f}</div>
-                <div class="sub">#{em_rank} in tournament</div></div>""", unsafe_allow_html=True)
+                <div class="val">{f"{adj_em:+.1f}" if adj_em is not None else "N/A"}</div>
+                <div class="sub">{"#"+str(em_rank)+" in tournament" if em_rank else "KenPom data N/A"}</div></div>""", unsafe_allow_html=True)
         with h2:
+            adj_o = _safe(sr.get("adjO", None))
             st.markdown(f"""<div class="stat-card">
                 <div class="lbl">Offense (AdjO)</div>
-                <div class="val">{sr.get('adjO','N/A')}</div>
+                <div class="val">{f"{adj_o:.1f}" if adj_o is not None else "N/A"}</div>
                 <div class="sub">pts per 100 poss (adj)</div></div>""", unsafe_allow_html=True)
         with h3:
+            adj_d = _safe(sr.get("adjD", None))
             st.markdown(f"""<div class="stat-card">
                 <div class="lbl">Defense (AdjD)</div>
-                <div class="val">{sr.get('adjD','N/A')}</div>
+                <div class="val">{f"{adj_d:.1f}" if adj_d is not None else "N/A"}</div>
                 <div class="sub">opp pts per 100 poss</div></div>""", unsafe_allow_html=True)
         with h4:
             three_pct = float(ms_match["kp_3pt_pct"].iloc[0]) if not ms_match.empty and "kp_3pt_pct" in ms_match.columns and pd.notna(ms_match["kp_3pt_pct"].iloc[0]) else None
@@ -3009,15 +3031,15 @@ with tab_calibration:
                 except Exception:
                     val_str = str(val)
                 weapons_html += f"""
-<div style="padding:5px 0;border-bottom:1px solid #f5f5f5;">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+    <div style="padding:5px 0;border-bottom:1px solid #f5f5f5;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
     <span style="font-size:0.78rem;color:#555;">{label}</span>
     <span style="font-size:0.78rem;font-weight:700;color:{bar_color};">{val_str} &nbsp; ({int(pct)}th%ile)</span>
-  </div>
-  <div style="height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden;">
+      </div>
+      <div style="height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden;">
     <div style="height:6px;width:{bar_w}%;background:{bar_color};border-radius:3px;"></div>
-  </div>
-</div>"""
+      </div>
+    </div>"""
 
             # Add 3P% if available
             if not ms_match.empty and "kp_3pt_pct" in ms_match.columns:
@@ -3028,15 +3050,15 @@ with tab_calibration:
                     pct3 = (all3 < val3).mean() * 100
                     bar_color = GREEN if pct3 >= 80 else BLUE if pct3 >= 50 else ORANGE if pct3 >= 25 else "#f87171"
                     weapons_html += f"""
-<div style="padding:5px 0;border-bottom:1px solid #f5f5f5;">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+    <div style="padding:5px 0;border-bottom:1px solid #f5f5f5;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
     <span style="font-size:0.78rem;color:#555;">3-Point Shooting (KenPom)</span>
     <span style="font-size:0.78rem;font-weight:700;color:{bar_color};">{val3:.1f}% &nbsp; ({int(pct3)}th%ile)</span>
-  </div>
-  <div style="height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden;">
+      </div>
+      <div style="height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden;">
     <div style="height:6px;width:{int(pct3)}%;background:{bar_color};border-radius:3px;"></div>
-  </div>
-</div>"""
+      </div>
+    </div>"""
 
             st.markdown(f'<div style="background:white;border-radius:10px;padding:14px;'
                         f'box-shadow:0 1px 6px rgba(0,33,165,0.07);border:1px solid #eaeef8;">'
@@ -3046,7 +3068,7 @@ with tab_calibration:
         strengths = []
         if not he_match.empty:
             hr = he_match.iloc[0]
-            for p, pcol in [("Center","C Hgt"),("PG","PG Hgt"),("PF","PF Hgt")]:
+            for p, pcol in [("Center","C Hgt"),("Fwd","SF Hgt"),("PG","PG Hgt")]:
                 if pcol in he_match.columns:
                     v = pd.to_numeric(hr.get(pcol, None), errors="coerce")
                     if pd.notna(v) and float(v) >= 1.5:
@@ -3068,12 +3090,10 @@ with tab_calibration:
         if strengths:
             strengths_str = "  ·  ".join(strengths)
             st.markdown(f"""
-<div style="background:{GREEN_BG};border:1px solid {GREEN};border-radius:8px;
+    <div style="background:{GREEN_BG};border:1px solid {GREEN};border-radius:8px;
             padding:10px 14px;margin-top:8px;font-size:0.83rem;color:#15803d;">
-  <b>Key Strengths:</b> {strengths_str}
-</div>""", unsafe_allow_html=True)
-
-
+      <b>Key Strengths:</b> {strengths_str}
+    </div>""", unsafe_allow_html=True)
 # ── Footer ────────────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="footer">
