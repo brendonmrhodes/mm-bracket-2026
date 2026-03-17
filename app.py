@@ -2485,7 +2485,7 @@ with tab_hot:
             textposition="top right",
             textfont=dict(size=9),
             marker=dict(size=sz, color=clr, opacity=0.75,
-                        line=dict(color="white" if is_highlight else "transparent", width=1.5)),
+                        line=dict(color="white" if is_highlight else "rgba(0,0,0,0)", width=1.5)),
             name=row["TeamName"] if is_highlight else "",
             hovertemplate=f"<b>({row['SeedDisplay']}) {row['TeamName']}</b><br>"
                           f"Momentum: {row['elo_momentum']:+.0f}<br>"
@@ -2623,7 +2623,7 @@ with tab_calibration:
         x=cal_data["bin_mid"].tolist() + cal_data["bin_mid"].tolist()[::-1],
         y=cal_data["error_high"].tolist() + cal_data["error_low"].tolist()[::-1],
         fill="toself", fillcolor="rgba(0,33,165,0.08)",
-        line=dict(color="transparent"), name="95% CI",
+        line=dict(color="rgba(0,0,0,0)"), name="95% CI",
         hoverinfo="skip",
     ))
 
@@ -2829,7 +2829,7 @@ with tab_calibration:
                     textposition="top right",
                     textfont=dict(size=8),
                     marker=dict(size=sz, color=clr, opacity=0.8,
-                                line=dict(color="white" if is_top else "transparent", width=1.5)),
+                                line=dict(color="white" if is_top else "rgba(0,0,0,0)", width=1.5)),
                     hovertemplate=f"<b>({r['SeedDisplay']}) {r['TeamClean']}</b><br>"
                                   f"3P%: {r['kp_3pt_pct']:.1f}%<br>"
                                   f"3PA Rate: {r['kp_3pa_rate']:.1f}%<br>"
