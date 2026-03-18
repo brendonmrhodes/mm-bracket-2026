@@ -1212,6 +1212,8 @@ with tab_matchup:
                     try:
                         val_a = float(stats_a[stat])
                         val_b = float(stats_b[stat])
+                        if pd.isna(val_a) or pd.isna(val_b):
+                            continue
                         diff = abs(val_a - val_b)
                         diffs.append((stat, val_a, val_b, diff))
                     except (ValueError, TypeError):
