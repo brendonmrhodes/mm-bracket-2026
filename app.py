@@ -263,7 +263,7 @@ st.markdown(f"""
 # ── Data loading ──────────────────────────────────────────────────────────────
 BASE = Path(__file__).parent
 
-@st.cache_data(ttl=0)
+@st.cache_data(ttl=3600)
 def load_data():
     round_df = pd.read_csv(BASE / "outputs" / "round_probs_2026.csv")
     sub_df   = pd.read_csv(BASE / "outputs" / "submission_2026.csv")
