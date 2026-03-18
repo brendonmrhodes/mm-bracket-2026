@@ -934,23 +934,66 @@ with tab_bracket:
 </div>"""
 
     # ── First Four section ───────────────────────────────────────────────────
+    # Completed play-in results (updated as games are played)
+    FF_COMPLETED = {
+        "Y16": {"winner": "Howard",   "w_score": 86, "loser": "UMBC",     "l_score": 83, "date": "Mar 17"},
+        "Z11": {"winner": "Texas",    "w_score": 68, "loser": "NC State",  "l_score": 66, "date": "Mar 17"},
+    }
+
+    def render_ff_result_card(result, region_name, seed_num):
+        """Render a completed First Four result card."""
+        return f"""
+<div style="background:white;border-radius:10px;border:1px solid #e2e8f0;
+            box-shadow:0 1px 4px rgba(0,33,165,0.06);padding:10px 12px;margin-bottom:4px;">
+  <div style="font-size:0.65rem;font-weight:700;color:{BLUE};text-transform:uppercase;
+              letter-spacing:0.8px;margin-bottom:6px;">
+    {region_name} · Seed {seed_num} · <span style="color:{GREEN};">FINAL — {result['date']}</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;padding:5px 0;">
+    <span style="font-size:0.65rem;font-weight:800;color:white;background:{GREEN};
+                 border-radius:3px;padding:1px 5px;min-width:18px;text-align:center;">{seed_num}</span>
+    <span style="font-size:0.85rem;font-weight:700;color:#15803d;flex:1;">{result['winner']}</span>
+    <span style="font-size:0.85rem;font-weight:800;color:#15803d;">{result['w_score']}</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid #f0f2f8;">
+    <span style="font-size:0.65rem;font-weight:700;color:#ccc;background:#f0f0f0;
+                 border-radius:3px;padding:1px 5px;min-width:18px;text-align:center;">{seed_num}</span>
+    <span style="font-size:0.85rem;font-weight:400;color:#9ca3af;flex:1;text-decoration:line-through;">{result['loser']}</span>
+    <span style="font-size:0.85rem;font-weight:600;color:#9ca3af;">{result['l_score']}</span>
+  </div>
+</div>"""
+
     ff_items = sorted(first_four.items())
-    if ff_items:
+    all_ff_bases = sorted(list(FF_COMPLETED.keys()) + [b for b, _ in ff_items])
+    if all_ff_bases:
         st.markdown('<div class="stitle">First Four — Play-In Games</div>',
                     unsafe_allow_html=True)
-        ff_cols = st.columns(len(ff_items))
-        for col, (base, pair) in zip(ff_cols, ff_items):
-            with col:
+        ncols = len(all_ff_bases)
+        ff_cols = st.columns(ncols)
+        col_idx = 0
+        # Show completed results first
+        for base in sorted(FF_COMPLETED.keys()):
+            with ff_cols[col_idx]:
+                res = FF_COMPLETED[base]
+                region_name = REGION_NAMES.get(base[0], "")
+                seed_num = base[1:].lstrip("0")
+                st.markdown(render_ff_result_card(res, region_name, seed_num),
+                            unsafe_allow_html=True)
+            col_idx += 1
+        # Show pending play-ins
+        for base, pair in ff_items:
+            with ff_cols[col_idx]:
                 id_a, id_b = pair[0][1], pair[1][1]
                 region_name = REGION_NAMES.get(base[0], "")
                 seed_num    = base[1:].lstrip("0")
                 st.markdown(f"""
                 <div style="font-size:0.7rem;font-weight:700;color:{BLUE};
                     text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;">
-                  {region_name} · Seed {seed_num} Play-In
+                  {region_name} · Seed {seed_num} · <span style="color:#f59e0b;">Tonight</span>
                 </div>
                 {matchup_html(None, None, ff_id_a=id_a, ff_id_b=id_b)}
                 """, unsafe_allow_html=True)
+            col_idx += 1
 
     st.write("")
     st.markdown('<div class="stitle">First Round by Region</div>', unsafe_allow_html=True)
