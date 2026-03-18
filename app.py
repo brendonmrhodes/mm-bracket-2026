@@ -525,7 +525,7 @@ with tab_odds:
         plot_bgcolor="white", paper_bgcolor="white",
         height=420, margin=dict(t=50,b=90,l=40,r=20),
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     # Full table — all rounds with sort controls
     st.markdown('<div class="stitle">All Teams — Round-by-Round Probabilities</div>',
@@ -555,7 +555,7 @@ with tab_odds:
     fmt = {c: "{:.1f}%" for c in tbl.columns[2:]}
     st.dataframe(
         tbl.style.apply(hl_gator, axis=1).format(fmt),
-        use_container_width=True, height=480,
+        width="stretch", height=480,
     )
 
 
@@ -1145,7 +1145,7 @@ with tab_matchup:
             plot_bgcolor="white", paper_bgcolor="white",
             height=120, margin=dict(t=8,b=8,l=10,r=10), showlegend=False,
         )
-        st.plotly_chart(fig_bar, use_container_width=True)
+        st.plotly_chart(fig_bar, width="stretch")
 
         st.markdown('<div class="stitle">Bracket Path Comparison</div>',
                     unsafe_allow_html=True)
@@ -1173,7 +1173,7 @@ with tab_matchup:
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
             font=dict(color=BLUE),
         )
-        st.plotly_chart(fig_cmp, use_container_width=True)
+        st.plotly_chart(fig_cmp, width="stretch")
 
         # ── Key Factors section ──────────────────────────────────────────────
         STAT_COLS = list(STAT_LABELS.keys())
@@ -1381,7 +1381,7 @@ with tab_pool:
     st.dataframe(
         full_tbl.sort_values("Champ EV", ascending=False)
                .style.map(color_ev, subset=["F4 EV","NCG EV","Champ EV"]),
-        use_container_width=True, height=480,
+        width="stretch", height=480,
     )
 
 
@@ -1421,10 +1421,10 @@ with tab_model:
     c1, c2 = st.columns(2)
     with c1:
         st.plotly_chart(fi_chart(fi_xgb, "XGBoost — Top 15 Features", BLUE),
-                        use_container_width=True)
+                        width="stretch")
     with c2:
         st.plotly_chart(fi_chart(fi_lgb, "LightGBM — Top 15 Features", ORANGE),
-                        use_container_width=True)
+                        width="stretch")
 
     st.markdown('<div class="stitle">Model Performance</div>', unsafe_allow_html=True)
     p1, p2, p3 = st.columns(3)
@@ -1555,7 +1555,7 @@ with tab_dna:
         paper_bgcolor="white",
         height=440,
     )
-    st.plotly_chart(fig_radar, use_container_width=True)
+    st.plotly_chart(fig_radar, width="stretch")
 
     # ── Section 2: Champion DNA Checklist ────────────────────────────────────
     st.markdown(f'<div class="stitle" style="font-size:1.05rem;margin-top:4px;">Championship DNA Checklist</div>',
@@ -1734,7 +1734,7 @@ with tab_dna:
         margin=dict(l=50, r=30, t=30, b=80),
         height=450,
     )
-    st.plotly_chart(fig_sc, use_container_width=True)
+    st.plotly_chart(fig_sc, width="stretch")
 
     # ── Section 4: Upset Rates ────────────────────────────────────────────────
     st.markdown(f'<div class="stitle" style="font-size:1.05rem;margin-top:4px;">Historical Upset Rates by Seed Matchup</div>',
@@ -1766,7 +1766,7 @@ with tab_dna:
     fig_up.add_hline(y=50, line_dash="dot", line_color="#999",
                      annotation_text="50% (coin flip)", annotation_position="top right",
                      annotation_font_size=10)
-    st.plotly_chart(fig_up, use_container_width=True)
+    st.plotly_chart(fig_up, width="stretch")
 
     # ── Section 5: Past Champions Gallery ────────────────────────────────────
     st.markdown(f'<div class="stitle" style="font-size:1.05rem;margin-top:4px;">Past Champions Since 2003</div>',
@@ -1795,7 +1795,7 @@ with tab_dna:
               .format({"AdjEM": "{:+.1f}", "Avg Margin": "{:+.1f}", "WAB": "{:+.1f}",
                        "BARTHAG": "{:.3f}", "Elo": "{:,}"})
               .set_properties(**{"font-size": "0.82rem"}))
-    st.dataframe(styled, use_container_width=True, hide_index=True)
+    st.dataframe(styled, width="stretch", hide_index=True)
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -2324,7 +2324,7 @@ with tab_deepdive:
             legend=dict(orientation="h", yanchor="bottom", y=-0.25, x=0),
             xaxis=dict(tickfont=dict(size=11)),
         )
-        st.plotly_chart(fig_rnd, use_container_width=True)
+        st.plotly_chart(fig_rnd, width="stretch")
 
         # ── Key Stats vs Champion Median ──────────────────────────────────
         st.markdown(f'<div class="stitle" style="font-size:1.05rem;">Key Stats vs Champion Median</div>',
@@ -2417,7 +2417,7 @@ with tab_deepdive:
                     hist_tbl[["Season","Seed","Record","Deepest Round"]]
                     .style.map(color_round, subset=["Deepest Round"])
                     .format({"Season": "{:.0f}"}),
-                    use_container_width=True, hide_index=True, height=320,
+                    width="stretch", hide_index=True, height=320,
                 )
 
         # ── Roster Profile ───────────────────────────────────────────────
@@ -2490,7 +2490,7 @@ with tab_hot:
         plot_bgcolor="white", paper_bgcolor="white",
         height=380, margin=dict(t=40,b=90,l=40,r=20),
     )
-    st.plotly_chart(fig_hot, use_container_width=True)
+    st.plotly_chart(fig_hot, width="stretch")
 
     # Late win % vs Elo momentum scatter
     st.markdown(f'<div class="stitle" style="font-size:1.05rem;">Momentum vs Late-Season Win Rate</div>',
@@ -2546,7 +2546,7 @@ with tab_hot:
         height=440, margin=dict(l=50,r=30,t=20,b=50),
         showlegend=False,
     )
-    st.plotly_chart(fig_scat, use_container_width=True)
+    st.plotly_chart(fig_scat, width="stretch")
 
     # ── Section 2: Bracket Busters — High Variance Picks ─────────────────
     st.markdown(f'<div class="stitle" style="font-size:1.05rem;margin-top:4px;">Bracket Busters — High Variance Picks</div>',
@@ -2693,7 +2693,7 @@ with tab_calibration:
         height=420, margin=dict(t=20,b=50,l=50,r=20),
         legend=dict(orientation="h", y=-0.2, x=0),
     )
-    st.plotly_chart(fig_cal, use_container_width=True)
+    st.plotly_chart(fig_cal, width="stretch")
 
     # Calibration summary stats
     # Brier score and ECE
@@ -2748,7 +2748,7 @@ with tab_calibration:
         plot_bgcolor="white", paper_bgcolor="white",
         height=320, margin=dict(t=20,b=50,l=50,r=20),
     )
-    st.plotly_chart(fig_ll, use_container_width=True)
+    st.plotly_chart(fig_ll, width="stretch")
 
     # (Player Spotlight moved to its own tab below)
 
@@ -2826,7 +2826,7 @@ with tab_spotlight:
                     title=dict(text=f"Top 10 {pos_name} Size Advantages in the Tournament",
                                font=dict(color=BLUE, size=13)),
                 )
-                st.plotly_chart(fig_pos, use_container_width=True)
+                st.plotly_chart(fig_pos, width="stretch")
 
                 # Show bottom (smallest) for context
                 bottom5 = pos_df.tail(5).sort_values(pos_col)
@@ -2900,7 +2900,7 @@ with tab_spotlight:
                 plot_bgcolor="white", paper_bgcolor="white",
                 height=420, margin=dict(l=50,r=30,t=20,b=50),
             )
-            st.plotly_chart(fig_shoot, use_container_width=True)
+            st.plotly_chart(fig_shoot, width="stretch")
 
             # Top shooters table
             st.markdown("**Top 3-Point Shooting Teams in the Tournament Field:**")
@@ -2909,7 +2909,7 @@ with tab_spotlight:
             top_shoot = top_shoot.reset_index(drop=True)
             top_shoot.index = top_shoot.index + 1
             st.dataframe(top_shoot.style.format({"3P%":"{:.1f}%","3PA Rate%":"{:.1f}%"}),
-                         use_container_width=True, height=320)
+                         width="stretch", height=320)
     else:
         st.caption("Shooting data not available.")
 
@@ -3001,9 +3001,8 @@ with tab_spotlight:
                 if pos_vals:
                     # Add avg height overall
                     avg_hgt = pd.to_numeric(hr.get("Avg Hgt", None), errors="coerce")
-                    avg_in = int(avg_hgt) // 1
-                    avg_frac = round((avg_hgt % 1) * 12)
-                    avg_str = f"{int(avg_hgt // 12)}'{int(avg_hgt % 12)}\"" if avg_hgt and avg_hgt > 0 else "N/A"
+                    avg_str = (f"{int(avg_hgt // 12)}'{int(avg_hgt % 12)}\""
+                               if pd.notna(avg_hgt) and avg_hgt > 0 else "N/A")
 
                     fig_pos_team = go.Figure(go.Bar(
                         x=pos_labels, y=pos_vals,
@@ -3019,21 +3018,23 @@ with tab_spotlight:
                         height=280, margin=dict(t=10,b=30,l=40,r=10),
                         title=dict(text=f"Avg team height: {avg_str}", font=dict(size=11,color="#666")),
                     )
-                    st.plotly_chart(fig_pos_team, use_container_width=True)
+                    st.plotly_chart(fig_pos_team, width="stretch")
 
                     # Experience and Bench
                     exp_rank = hr.get("Experience", None)
                     bench    = hr.get("Bench", None)
                     cont     = hr.get("Continuity", None)
-                    if exp_rank is not None and pd.notna(exp_rank):
+                    exp_num = pd.to_numeric(exp_rank, errors="coerce") if exp_rank is not None else None
+                    cont_num = pd.to_numeric(cont, errors="coerce") if cont is not None else None
+                    if exp_num is not None and pd.notna(exp_num):
                         total_teams = len(height_exp)
-                        exp_pct = int((total_teams - int(exp_rank)) / total_teams * 100)
+                        exp_pct = int((total_teams - int(exp_num)) / total_teams * 100)
                         st.markdown(
                             f'<span style="font-size:0.82rem;color:#555;">Experience rank: '
-                            f'<b style="color:{BLUE};">#{int(exp_rank)}</b> nationally '
+                            f'<b style="color:{BLUE};">#{int(exp_num)}</b> nationally '
                             f'({exp_pct}th percentile)'
-                            + (f'  ·  Bench: <b>{bench}</b> pts+/-' if bench else "")
-                            + (f'  ·  Continuity: <b>#{int(cont)}</b>' if cont else "")
+                            + (f'  ·  Bench: <b>{bench}</b> pts+/-' if bench and pd.notna(bench) else "")
+                            + (f'  ·  Continuity: <b>#{int(cont_num)}</b>' if cont_num is not None and pd.notna(cont_num) else "")
                             + '</span>',
                             unsafe_allow_html=True
                         )
