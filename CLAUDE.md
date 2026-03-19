@@ -86,7 +86,9 @@ MM-Prediction/
 │
 └── outputs/
     ├── models.pkl                    ← trained XGB + LGB + LR ensemble
-    ├── models_tuned.pkl              ← Optuna-tuned + calibrated models (after 04_tune.py)
+    ├── models_tuned.pkl              ← ACTIVE model = copy of models_tuned_v4a.pkl (0.280 log-loss)
+    ├── models_tuned_v4a.pkl          ← v4-tuned: best model (315 features, 0.280 log-loss) ✓
+    ├── models_tuned_v4b.pkl          ← v4b-tuned: worse (336 features, 0.289 log-loss) — do not use
     ├── best_params.json              ← best hyperparameters from Optuna
     ├── submission_2026.csv           ← Kaggle submission (2,278 matchups)
     ├── round_probs_2026.csv          ← P(reaching each round) for all 68 teams
@@ -219,7 +221,7 @@ LightGBM: n_estimators=500, max_depth=4, learning_rate=0.03,
 | v4 | + 21 Massey systems, MLP ensemble, KenPom Four Factors/Height/Misc Stats | 86.4% | 0.333 |
 | v4-tuned | + Optuna tuning (450 trials) + isotonic calibration | **89.4%** | **0.280** |
 | v4b | + Coach features (13,763 rows) + 5 upset profile features → 358 features total | 86.3% | 0.330 |
-| v4b-tuned | + Optuna v4b (in progress, Phase 1 best 0.3079) | TBD | TBD |
+| v4b-tuned | + Optuna v4b (completed) — worse than v4-tuned; not used | 88.9% | 0.289 |
 
 ---
 
@@ -317,7 +319,7 @@ Submission file: `outputs/submission_2026.csv`
 ## Roadmap / Next Steps
 
 ### High Priority
-- [ ] Wait for `04_tune.py` v4b to finish → run `03_predict.py` for final 2026 predictions
+- [x] v4b tuning complete — 0.289 log-loss, worse than v4-tuned (0.280). Kept v4a as active model.
 - [ ] Update seeds when First Four results available (X16: Lehigh/Prairie View, Y11: Miami OH/SMU)
 - [ ] Run `fetch_warrennolan.py` for historical NET rankings
 
@@ -327,7 +329,7 @@ Submission file: `outputs/submission_2026.csv`
 - [x] `outputs/historical_seed_rates.csv` — Advance rates by seed 1985–2025
 - [x] `outputs/round_model_cv_results.csv` — Round-stratified model CV (vs unified model)
 
-### Key 2026 Model Findings (untuned v4b, may update after tuning)
+### Key 2026 Model Findings (v4-tuned, 0.280 log-loss — final)
 - **Champion**: Duke 45.6%, Arizona 43.5% (both dominate; Michigan 4.8%, Florida 2.6% despite 1-seeds)
 - **Top upset alert**: VCU (11) given 73.1% to beat North Carolina (6) — largest upset edge (driven by +62 Elo gap and +75 momentum for VCU)
 - **Cinderella watch**: Queens NC (Z15) — 29.1% to beat Purdue, 5.15x EV for Sweet 16 (may be inflated by missing KenPom/Torvik data → imputed at median)
