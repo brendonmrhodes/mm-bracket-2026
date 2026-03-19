@@ -470,7 +470,7 @@ st.divider()
 # ══════════════════════════════════════════════════════════════════════════════
 # TABS
 # ══════════════════════════════════════════════════════════════════════════════
-tab_odds, tab_bracket, tab_matchup, tab_pool, tab_dna, tab_upset, tab_model, tab_optimizer, tab_deepdive, tab_hot, tab_calibration, tab_spotlight = st.tabs([
+tab_odds, tab_bracket, tab_matchup, tab_pool, tab_dna, tab_upset, tab_model, tab_optimizer, tab_deepdive, tab_hot, tab_calibration, tab_spotlight, tab_generated = st.tabs([
     "Championship Odds",
     "Full Bracket",
     "Matchup Explorer",
@@ -483,6 +483,7 @@ tab_odds, tab_bracket, tab_matchup, tab_pool, tab_dna, tab_upset, tab_model, tab
     "Hot Streaks & Busters",
     "Model Calibration",
     "Player Spotlight",
+    "🎯 Generated Brackets",
 ])
 
 
@@ -3180,6 +3181,179 @@ with tab_spotlight:
             padding:10px 14px;margin-top:8px;font-size:0.83rem;color:#15803d;">
       <b>Key Strengths:</b> {strengths_str}
     </div>""", unsafe_allow_html=True)
+# ════════════════════════════════════════════════════════════════════════════
+# TAB 13 — Generated Brackets
+# ════════════════════════════════════════════════════════════════════════════
+with tab_generated:
+    st.markdown('<div class="stitle">Model-Generated Brackets</div>', unsafe_allow_html=True)
+
+    _gb_path = BASE / "outputs" / "generated_brackets.csv"
+    _gs_path = BASE / "outputs" / "generated_brackets_summary.csv"
+
+    if not _gb_path.exists():
+        st.warning("No generated brackets found. Run `src/analysis/generate_brackets.py` first.")
+    else:
+        _gb = pd.read_csv(_gb_path)
+        _gs = pd.read_csv(_gs_path)
+
+        st.markdown(f"""
+        <div class="info-banner">
+            {len(_gs)} brackets generated using a <b>greedy max-diversity algorithm</b> — each bracket
+            maximises its weighted distance from all previously-selected ones (later rounds count
+            exponentially more). Every bracket is a legitimate draw from the model's probability
+            distribution: reasonable individually, maximally diverse collectively.
+        </div>""", unsafe_allow_html=True)
+
+        # ── Selector ──────────────────────────────────────────────────────────
+        bracket_labels = _gs["Bracket"].tolist()
+        champion_labels = _gs["Champion"].tolist()
+        options = [f"{b}  —  Champion: {c}" for b, c in zip(bracket_labels, champion_labels)]
+        chosen_idx = st.selectbox("Select bracket", range(len(options)),
+                                  format_func=lambda i: options[i], key="gb_selector")
+        chosen_bracket = bracket_labels[chosen_idx]
+        chosen_row     = _gs[_gs["Bracket"] == chosen_bracket].iloc[0]
+        picks          = _gb[_gb["Bracket"] == chosen_bracket].copy()
+
+        # ── Summary cards ─────────────────────────────────────────────────────
+        st.write("")
+        sc1, sc2, sc3 = st.columns(3)
+        with sc1:
+            st.markdown(f"""
+            <div class="gator-card">
+                <div class="lbl">Champion</div>
+                <div class="val" style="font-size:1.4rem;">{chosen_row["Champion"]}</div>
+            </div>""", unsafe_allow_html=True)
+        with sc2:
+            st.markdown(f"""
+            <div class="stat-card">
+                <div class="lbl">Championship Game</div>
+                <div class="val" style="font-size:1.05rem;margin-top:4px;">{chosen_row["Championship_Game"]}</div>
+            </div>""", unsafe_allow_html=True)
+        with sc3:
+            st.markdown(f"""
+            <div class="stat-card">
+                <div class="lbl">Final Four</div>
+                <div class="val" style="font-size:0.82rem;margin-top:4px;line-height:1.5;">
+                    {"<br>".join(chosen_row["Final_Four"].split(" / "))}
+                </div>
+            </div>""", unsafe_allow_html=True)
+
+        st.write("")
+
+        # ── Helper: parse game key into (round_label, region) ─────────────────
+        ROUND_LABEL = {
+            "R32":      "Round of 64",
+            "S16":      "Round of 32",
+            "E8":       "Sweet 16",
+            "RegFinal": "Elite 8",
+        }
+        REGION_FULL = {"W": "East", "X": "South", "Y": "Midwest", "Z": "West"}
+        ROUND_ORDER = ["Round of 64", "Round of 32", "Sweet 16", "Elite 8"]
+
+        def parse_key(key):
+            """Return (round_label, region, sort_index) or None for non-regional games."""
+            for prefix, label in ROUND_LABEL.items():
+                if key.startswith(prefix + "_"):
+                    parts = key.split("_")
+                    region = parts[1] if len(parts) > 1 else "?"
+                    idx    = int(parts[2]) if len(parts) > 2 else 0
+                    return label, region, idx
+            return None, None, 0
+
+        # ── Build per-region pick tables ───────────────────────────────────────
+        region_data = {r: {lbl: [] for lbl in ROUND_ORDER} for r in "WXYZ"}
+
+        for _, row in picks.iterrows():
+            lbl, reg, idx = parse_key(row["Game"])
+            if lbl and reg in region_data:
+                region_data[reg][lbl].append((idx, row["Winner"], row["Seed"]))
+
+        for reg in region_data:
+            for lbl in ROUND_ORDER:
+                region_data[reg][lbl].sort(key=lambda x: x[0])
+
+        # ── Region columns ─────────────────────────────────────────────────────
+        st.markdown(f'<div class="stitle">Regional Picks</div>', unsafe_allow_html=True)
+        cols = st.columns(4)
+
+        for col, reg in zip(cols, "WXYZ"):
+            with col:
+                reg_champ_row = picks[picks["Game"] == f"RegFinal_{reg}"]
+                reg_champ = (f"{reg_champ_row['Winner'].values[0]} "
+                             f"({reg_champ_row['Seed'].values[0]})"
+                             if not reg_champ_row.empty else "—")
+
+                st.markdown(f"""
+                <div style="background:{BLUE};color:white;border-radius:8px 8px 0 0;
+                     padding:8px 12px;font-weight:800;font-size:0.9rem;">
+                    {REGION_FULL[reg]} Region
+                </div>
+                <div style="background:#f8f9ff;border:1px solid #dde;border-top:none;
+                     border-radius:0 0 8px 8px;padding:10px 12px;margin-bottom:12px;">
+                    <div style="font-size:0.68rem;font-weight:700;color:{ORANGE};
+                         text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;">
+                        Regional Champion → Final Four
+                    </div>
+                    <div style="font-weight:800;font-size:0.95rem;color:{BLUE};
+                         margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid {ORANGE};">
+                        {reg_champ}
+                    </div>
+                """, unsafe_allow_html=True)
+
+                for rnd_label in ROUND_ORDER:
+                    entries = region_data[reg][rnd_label]
+                    if not entries:
+                        continue
+                    st.markdown(f"""
+                    <div style="font-size:0.68rem;font-weight:700;color:#888;
+                         text-transform:uppercase;letter-spacing:.5px;
+                         margin:6px 0 3px;">{rnd_label}</div>
+                    """, unsafe_allow_html=True)
+                    for _, winner, seed in entries:
+                        seed_disp = str(seed)[1:].lstrip("0") if len(str(seed)) > 1 else str(seed)
+                        is_champ  = winner in chosen_row["Champion"]
+                        color     = ORANGE if is_champ else BLUE
+                        st.markdown(f"""
+                        <div style="font-size:0.82rem;padding:3px 6px;margin-bottom:2px;
+                             border-left:3px solid {color};background:white;border-radius:0 4px 4px 0;">
+                            <span style="color:#999;font-size:0.72rem;margin-right:4px;">({seed_disp})</span>
+                            <span style="font-weight:600;color:#222;">{winner}</span>
+                        </div>""", unsafe_allow_html=True)
+
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        # ── Final Four & Championship ──────────────────────────────────────────
+        st.markdown(f'<div class="stitle" style="margin-top:8px;">Final Four & Championship</div>',
+                    unsafe_allow_html=True)
+        ff1, ff2, ff3 = st.columns(3)
+
+        f4_wx = picks[picks["Game"] == "F4_WX"]
+        f4_yz = picks[picks["Game"] == "F4_YZ"]
+        ncg   = picks[picks["Game"] == "NCG"]
+
+        def ff_card(label, row, highlight=False):
+            if row.empty:
+                return f'<div class="stat-card"><div class="lbl">{label}</div><div class="val">—</div></div>'
+            name  = row["Winner"].values[0]
+            seed  = str(row["Seed"].values[0])[1:].lstrip("0") if len(str(row["Seed"].values[0])) > 1 else str(row["Seed"].values[0])
+            cls   = "gator-card" if highlight else "stat-card"
+            return f'<div class="{cls}"><div class="lbl">{label}</div><div class="val" style="font-size:1.25rem;">({seed}) {name}</div></div>'
+
+        with ff1:
+            st.markdown(ff_card("East/South Winner (→ Final)", f4_wx), unsafe_allow_html=True)
+        with ff2:
+            st.markdown(ff_card("Midwest/West Winner (→ Final)", f4_yz), unsafe_allow_html=True)
+        with ff3:
+            st.markdown(ff_card("🏆 Champion", ncg, highlight=True), unsafe_allow_html=True)
+
+        # ── All brackets at a glance ───────────────────────────────────────────
+        st.write("")
+        with st.expander("All 19 brackets at a glance"):
+            _gs_disp = _gs.copy()
+            _gs_disp.columns = ["Bracket", "Champion", "Championship Game", "Final Four"]
+            st.dataframe(_gs_disp, width="stretch", height=400)
+
+
 # ── Footer ────────────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="footer">
