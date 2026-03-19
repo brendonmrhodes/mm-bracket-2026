@@ -569,6 +569,36 @@ with tab_odds:
     )
 
 
+# ── Championship Game Score Prediction ───────────────────────────────────────
+_total_path = BASE / "outputs" / "championship_total_2026.csv"
+if _total_path.exists():
+    total_df = pd.read_csv(_total_path)
+    st.markdown('<div class="stitle">Championship Game — Predicted Total Score</div>',
+                unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="info-banner">
+        Predicted using the KenPom efficiency formula calibrated against 22 historical
+        championship games (2003–2025). Pace is the biggest driver — Houston's slow tempo
+        (63 poss/40 min) suppresses totals; fast teams like Arizona/Florida push them higher.
+        Honest uncertainty: <b>±{int(total_df['resid_std'].iloc[0])} pts (1σ)</b> — championship
+        totals have ranged from 94 to 162 historically.
+    </div>""", unsafe_allow_html=True)
+
+    # Top 5 most likely matchups (sorted by pred_total)
+    _show = total_df.head(8).copy()
+    _show["Matchup"] = _show.apply(
+        lambda r: f"{r['Team1']} ({r['Seed1']}) vs {r['Team2']} ({r['Seed2']})", axis=1)
+    _show["Predicted Total"] = _show["pred_total"].astype(int)
+    _show["Range (±1σ)"] = _show.apply(
+        lambda r: f"{int(r['low_total'])}–{int(r['high_total'])}", axis=1)
+    _show["Avg Pace"] = _show["avg_pace"].round(1)
+    st.dataframe(
+        _show[["Matchup","Predicted Total","Range (±1σ)","Avg Pace"]].reset_index(drop=True),
+        width="stretch", height=320,
+    )
+    st.caption("Pace = avg possessions per 40 min. Calibration formula: Total = 0.66 × KenPom theoretical + 44.8. "
+               "Leave-one-out MAE ≈ 14 pts on 22 games.")
+
 # ════════════════════════════════════════════════════════════════════════════
 # TAB 2 — Full Bracket
 # ════════════════════════════════════════════════════════════════════════════
