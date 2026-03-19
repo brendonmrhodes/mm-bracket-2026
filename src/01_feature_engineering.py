@@ -57,7 +57,7 @@ if coach_path.exists():
     coach_features = pd.read_parquet(coach_path)
     print(f"  Coach features: {len(coach_features):,} rows ({coach_features['Season'].min()}–{coach_features['Season'].max()})")
 else:
-    print(f"  Coach features: not available (run fetch_coach_data.py)")
+    print(f"  Coach features: not available (run src/data/compute_coach_features.py)")
 
 # Sports-Reference SRS data — optional
 srs_features = None
@@ -267,14 +267,15 @@ features = (
 
 # Optional: merge coach features
 if coach_features is not None:
-    coach_cols = ["Season","TeamID","coach_tenure","coach_win_pct",
-                  "coach_tourn_apps","coach_tourn_wins","coach_f4s","coach_champs"]
+    coach_cols = ["Season","TeamID","coach_tenure","coach_is_new",
+                  "coach_career_winpct","coach_tourn_apps","coach_tourn_wins",
+                  "coach_f4s","coach_champs"]
     coach_keep = [c for c in coach_cols if c in coach_features.columns]
     features = features.merge(
         coach_features[coach_keep].drop_duplicates(["Season","TeamID"]),
         on=["Season","TeamID"], how="left"
     )
-    print(f"  Coach feature coverage: {features['coach_tenure'].notna().mean():.1%}")
+    print(f"  Coach feature coverage: {features['coach_tenure'].notna().mean():.1%} ({features['coach_tenure'].notna().sum()} teams)")
 
 # Optional: merge SRS features
 if srs_features is not None:
@@ -353,6 +354,43 @@ if kp_misc_stats is not None:
 
 features["SeedNum"]  = features["SeedNum"].fillna(17)
 features["InTourney"]= (features["SeedNum"] <= 16).astype(int)
+
+# ── Upset profile features ─────────────────────────────────────────────────────
+# These capture team characteristics historically associated with upsets/Cinderella runs.
+# All are team-level → become differentials + raw values in matchup construction.
+
+# Cinderella score: high Torvik BARTHAG relative to seed → undervalued team
+# barthag = expected win% vs avg D1 (0-1 scale). SeedNum 16 is worst seed.
+# Score is high when a team has strong efficiency but a high seed number.
+if "barthag" in features.columns:
+    features["cinderella_score"] = (
+        features["barthag"] * features["SeedNum"].clip(1, 16)
+    )
+    # Also a simpler version: raw barthag-to-seed ratio
+    features["barthag_per_seed"] = features["barthag"] / features["SeedNum"].clip(1, 16)
+
+# 3-point reliance: teams that live and die by the 3 are higher-variance → upset risk
+if "avg_FGA3_rate" in features.columns:
+    features["three_pt_reliance"] = features["avg_FGA3_rate"]  # already exists, alias for clarity
+
+# Tempo preference: teams with extreme tempo create matchup mismatches
+tempo_col = next((c for c in ["adjT", "tv_adjt"] if c in features.columns), None)
+if tempo_col:
+    tempo_mean = features[tempo_col].mean()
+    features["tempo_deviation"] = (features[tempo_col] - tempo_mean).abs()
+
+# Hot-team index: late-season Elo momentum × win rate → identifies peaking teams
+if "elo_momentum" in features.columns and "elo_late_winpct" in features.columns:
+    features["hot_team_index"] = (
+        features["elo_momentum"].clip(-100, 100) / 100 * features["elo_late_winpct"]
+    )
+
+# Efficiency-to-seed ratio: raw adjEM relative to seed → better than seed alone
+if "adjEM" in features.columns:
+    features["adjEM_per_seed"] = features["adjEM"] / features["SeedNum"].clip(1, 16)
+
+print(f"  Upset profile features added: cinderella_score, barthag_per_seed, "
+      f"tempo_deviation, hot_team_index, adjEM_per_seed")
 
 # Fill Elo for teams with no history (new D1 programs) with the mean
 # Fill Elo features with column means for teams with no history

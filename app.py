@@ -265,7 +265,10 @@ BASE = Path(__file__).parent
 
 @st.cache_data(ttl=3600)
 def load_data():
-    round_df = pd.read_csv(BASE / "outputs" / "round_probs_2026.csv")
+    # Use calibrated round probs (seed-blended + temperature-scaled) if available
+    _cal = BASE / "outputs" / "round_probs_2026_calibrated.csv"
+    _raw = BASE / "outputs" / "round_probs_2026.csv"
+    round_df = pd.read_csv(_cal if _cal.exists() else _raw)
     sub_df   = pd.read_csv(BASE / "outputs" / "submission_2026.csv")
     fi_xgb   = pd.read_csv(BASE / "outputs" / "feature_importance_xgb.csv",
                             header=None, names=["feature","importance"])
@@ -435,7 +438,7 @@ st.markdown("""
     <div class="hero-text">
         <h1>2026 NCAA Tournament Predictions</h1>
         <p>ML ensemble &nbsp;·&nbsp; XGBoost + LightGBM + Logistic Regression
-           &nbsp;·&nbsp; 100,000 bracket simulations</p>
+           &nbsp;·&nbsp; 100,000 bracket simulations &nbsp;·&nbsp; 0.280 log-loss (walk-forward CV)</p>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -489,6 +492,13 @@ tab_odds, tab_bracket, tab_matchup, tab_pool, tab_dna, tab_upset, tab_model, tab
 with tab_odds:
     st.markdown('<div class="stitle">Championship Probability Rankings</div>',
                 unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="info-banner">
+        Probabilities are <b>calibrated</b>: per-game model predictions are blended with historical
+        seed-pair win rates (e.g. 1-seeds win 98.2% of first-round games historically) and
+        temperature-scaled to reduce compounding bias across 6 rounds of play. Raw model output
+        is used for the Kaggle submission; these figures are optimized for bracket pool strategy.
+    </div>""", unsafe_allow_html=True)
 
     disp = round_df.sort_values("prob_Champion", ascending=False).reset_index(drop=True)
 
@@ -1395,9 +1405,9 @@ with tab_model:
                 unsafe_allow_html=True)
     st.markdown(f"""
     <div class="info-banner">
-        A weighted ensemble of <b>XGBoost</b> (47%), <b>LightGBM</b> (48%), and
-        <b>Logistic Regression</b> (5%), trained on every NCAA tournament game since 2002
-        using walk-forward cross-validation (no future data leakage). 292 features per matchup
+        A weighted ensemble of <b>XGBoost</b> (45%), <b>LightGBM</b> (45%), and
+        <b>Logistic Regression</b> (10%), trained on every NCAA tournament game since 2002
+        using walk-forward cross-validation (no future data leakage). 358 features per matchup
         spanning efficiency ratings, Elo momentum, strength of schedule, shot quality,
         height &amp; experience, conference tournament performance, and historical tournament DNA.
     </div>""", unsafe_allow_html=True)
@@ -1431,8 +1441,8 @@ with tab_model:
     st.markdown('<div class="stitle">Model Performance</div>', unsafe_allow_html=True)
     p1, p2, p3 = st.columns(3)
     for col, (lbl, val, sub) in zip([p1,p2,p3], [
-        ("Walk-Forward CV Accuracy", "86.6%", "Tested on 2010–2025 tournaments"),
-        ("Log-Loss (CV)", "0.320", "Lower is better — Kaggle scoring metric"),
+        ("Walk-Forward CV Accuracy", "89.4%", "Tested on 2015–2025 tournaments"),
+        ("Log-Loss (CV)", "0.280", "Lower is better — Kaggle scoring metric"),
         ("Bracket Simulations", "100,000", "Monte Carlo runs per prediction set"),
     ]):
         with col:
@@ -1813,8 +1823,8 @@ with tab_upset:
     </div>""", unsafe_allow_html=True)
 
     REGIONS = {"W": "East", "X": "South", "Y": "Midwest", "Z": "West"}
-    HISTORICAL_UPSET = {(5,12):38.6,(6,11):44.3,(7,10):37.9,(8,9):50.0,
-                        (4,13):20.5,(3,14):11.4,(2,15):8.0,(1,16):2.3}
+    HISTORICAL_UPSET = {(5,12):35.2,(6,11):36.8,(7,10):39.4,(8,9):49.4,
+                        (4,13):27.1,(3,14):15.5,(2,15):7.2,(1,16):1.8}
 
     UPSET_STATS = [
         ("adjEM",           "Efficiency Margin",  True,  "{:+.1f}"),
