@@ -35,6 +35,17 @@ KAGGLE_DIR = ROOT / "march-machine-learning-mania-2026"
 PREDICT_SEASON = 2026
 N_CANDIDATES   = 5_000   # simulations to draw from
 
+# ── Probability-realism controls ───────────────────────────────────────────────
+# Only consider the top PROB_POOL_FRAC of simulations by bracket probability
+# before applying diversity selection.  0.20 = top 20% (1,000 of 5,000).
+# Raising this lets in more variety; lowering it keeps brackets more "chalk".
+PROB_POOL_FRAC  = 0.20
+
+# In the diversity scoring, blend min-distance (diversity) with bracket
+# probability.  score = min_distance * prob_rank_score ^ PROB_BLEND_ALPHA
+# 0.0 = pure diversity (old behaviour)  |  1.0 = strongly probability-weighted
+PROB_BLEND_ALPHA = 0.6
+
 # Round weights for diversity metric — later rounds count exponentially more
 ROUND_WEIGHTS = {
     "R64": 1, "R32": 2, "S16": 4, "E8": 8,
@@ -213,16 +224,26 @@ def build_blended_lookup(team_list, feat_map, feat_cols,
 
 # ── Simulate one complete bracket ─────────────────────────────────────────────
 def simulate_bracket(win_prob, seeded, seed_map=None, feat_map=None):
-    """Return dict mapping game_key -> winning TeamID for all 63 games."""
-    results = {}
-    REGIONS = ["W", "X", "Y", "Z"]
+    """Return (results, champion, log_prob) for one complete bracket.
+
+    log_prob is the sum of log(p_winner) across all 63 games — a measure of
+    how probable this specific bracket is under the model.
+    """
+    results  = {}
+    log_prob = 0.0
+    REGIONS  = ["W", "X", "Y", "Z"]
 
     def sim(a, b, key):
+        nonlocal log_prob
         if seed_map is not None:
             p = _constrained_prob(a, b, key, win_prob, seed_map, feat_map)
         else:
             p = win_prob(a, b)
-        w = a if np.random.random() < p else b
+        if np.random.random() < p:
+            w, p_win = a, p
+        else:
+            w, p_win = b, 1.0 - p
+        log_prob += np.log(max(p_win, 1e-9))
         results[key] = w
         return w
 
@@ -276,7 +297,7 @@ def simulate_bracket(win_prob, seeded, seed_map=None, feat_map=None):
         champion = sim(finalists[0], finalists[1], "NCG")
         results["Champion"] = champion
 
-    return results, champion
+    return results, champion, log_prob
 
 
 # ── Diversity metric ───────────────────────────────────────────────────────────
@@ -298,32 +319,54 @@ def bracket_distance(b1_results, b2_results):
     return dist
 
 
-# ── Greedy diverse selection ───────────────────────────────────────────────────
+# ── Greedy probability-weighted diverse selection ──────────────────────────────
 def select_diverse(candidates, n, seed_map, t_name):
-    """Greedy: pick bracket that maximises min-distance to already-selected set."""
-    # Start with the highest-probability champion bracket (most common champion)
-    champ_counts = defaultdict(int)
-    for _, champ in candidates:
-        if champ:
-            champ_counts[champ] += 1
-    most_common_champ = max(champ_counts, key=champ_counts.get)
-    first = next((cand for cand in candidates if cand[1] == most_common_champ), candidates[0])
+    """
+    Greedy selection balancing realism (bracket probability) with diversity.
 
-    selected = [first]
-    remaining = [c for c in candidates if c is not first]
+    Algorithm:
+      1. Pre-filter to the top PROB_POOL_FRAC of candidates by log-probability.
+         This ensures every selected bracket is drawn from the high-probability
+         region of the distribution — no tail outliers just for variety's sake.
+      2. Normalise log-probs to [0, 1] within the filtered pool so brackets can
+         be ranked by relative plausibility.
+      3. Greedy: at each step score = min_distance × prob_rank ^ PROB_BLEND_ALPHA
+         This keeps diversity meaningful while weighting toward likelier brackets.
+      4. Start from the single highest-probability bracket (not just most common
+         champion) so bracket 1 is always the model's best single prediction.
+    """
+    # Step 1 — pre-filter to top probability pool
+    log_probs = np.array([lp for _, _, lp in candidates])
+    cutoff    = np.percentile(log_probs, (1.0 - PROB_POOL_FRAC) * 100)
+    pool      = [c for c in candidates if c[2] >= cutoff]
+    if len(pool) < n:
+        pool = candidates  # safety fallback
+
+    # Step 2 — normalise log-probs to [0, 1] within the pool
+    pool_lp   = np.array([c[2] for c in pool])
+    lp_min, lp_max = pool_lp.min(), pool_lp.max()
+    lp_range  = lp_max - lp_min if lp_max > lp_min else 1.0
+    prob_rank = {id(c): (c[2] - lp_min) / lp_range for c in pool}
+
+    # Step 3 — start with the highest-probability bracket overall
+    first     = max(pool, key=lambda c: c[2])
+    selected  = [first]
+    remaining = [c for c in pool if c is not first]
 
     while len(selected) < n and remaining:
-        best, best_score = None, -1
+        best, best_score = None, -1.0
         for candidate in remaining:
             min_d = min(bracket_distance(candidate[0], s[0]) for s in selected)
-            if min_d > best_score:
-                best_score = min_d
+            score = min_d * (prob_rank[id(candidate)] ** PROB_BLEND_ALPHA)
+            if score > best_score:
+                best_score = score
                 best = candidate
         selected.append(best)
         remaining.remove(best)
         champ = best[1]
-        print(f"  Bracket {len(selected):2d}: champion = {t_name.get(champ,'?'):<20}  "
-              f"min-distance = {best_score}")
+        prank = prob_rank[id(best)]
+        print(f"  Bracket {len(selected):2d}: champion = {t_name.get(champ,'?'):<22} "
+              f"prob-rank = {prank:.2f}  score = {best_score:.1f}")
 
     return selected
 
@@ -337,7 +380,7 @@ def format_brackets(selected, seed_2026, t_name):
     rows = []
     summary_rows = []
 
-    for idx, (results, champion) in enumerate(selected, 1):
+    for idx, (results, champion, _lp) in enumerate(selected, 1):
         label = f"Bracket_{idx:02d}"
 
         # Pull key picks
@@ -399,8 +442,8 @@ def main(n_brackets=19):
     candidates = []
     champ_tally = defaultdict(int)
     for _ in range(N_CANDIDATES):
-        res, champ = simulate_bracket(win_prob, seeded, seed_map, feat_2026)
-        candidates.append((res, champ))
+        res, champ, lp = simulate_bracket(win_prob, seeded, seed_map, feat_2026)
+        candidates.append((res, champ, lp))
         if champ:
             champ_tally[champ] += 1
 
@@ -410,7 +453,9 @@ def main(n_brackets=19):
         bar = "█" * int(pct / 2)
         print(f"  {t_name.get(tid,'?'):<22} {pct:5.1f}%  {bar}")
 
-    print(f"\nSelecting {n_brackets} maximally diverse brackets (greedy algorithm)...")
+    pool_size = int(N_CANDIDATES * PROB_POOL_FRAC)
+    print(f"\nSelecting {n_brackets} probability-weighted diverse brackets "
+          f"(top {pool_size:,} of {N_CANDIDATES:,} by prob, α={PROB_BLEND_ALPHA})...")
     selected = select_diverse(candidates, n_brackets, seed_map, t_name)
 
     detail_df, summary_df = format_brackets(selected, seed_2026, t_name)
