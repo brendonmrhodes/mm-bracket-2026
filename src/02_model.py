@@ -11,6 +11,7 @@ from pathlib import Path
 from sklearn.linear_model import LogisticRegression
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.preprocessing import StandardScaler
+from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import log_loss, brier_score_loss, accuracy_score
 from sklearn.pipeline import Pipeline
 import xgboost as xgb
@@ -83,6 +84,23 @@ def make_lr():
         ("model", LogisticRegression(C=0.1, max_iter=1000, random_state=42)),
     ])
 
+def make_mlp():
+    # Smaller architecture to avoid overfitting on ~1,400 training games
+    return Pipeline([
+        ("scaler", StandardScaler()),
+        ("model", MLPClassifier(
+            hidden_layer_sizes=(64, 32),
+            activation="relu",
+            max_iter=1000,
+            random_state=42,
+            learning_rate_init=0.001,
+            early_stopping=True,
+            validation_fraction=0.15,
+            n_iter_no_change=25,
+            alpha=0.05,  # stronger L2 regularization for small dataset
+        )),
+    ])
+
 
 print("\nRunning walk-forward cross-validation...")
 print(f"{'Season':>8}  {'N':>5}  {'Acc':>6}  {'LogLoss':>8}  {'Brier':>7}")
@@ -128,11 +146,16 @@ for season in cv_years:
     lr_model = make_lr()
     lr_model.fit(X_tr, y_tr)
 
+    mlp_model = make_mlp()
+    mlp_model.fit(X_tr, y_tr)
+
     # Ensemble: weighted average of probabilities
+    # MLP adds diversity via different inductive bias (smooth decision boundaries)
     p_xgb = xgb_model.predict_proba(X_te)[:, 1]
     p_lgb = lgb_model.predict_proba(X_te)[:, 1]
     p_lr  = lr_model.predict_proba(X_te)[:, 1]
-    p_ens = 0.45 * p_xgb + 0.45 * p_lgb + 0.10 * p_lr
+    p_mlp = mlp_model.predict_proba(X_te)[:, 1]
+    p_ens = 0.41 * p_xgb + 0.41 * p_lgb + 0.08 * p_lr + 0.10 * p_mlp
 
     # Clip to avoid log(0)
     p_ens = np.clip(p_ens, 0.01, 0.99)
@@ -155,6 +178,7 @@ overall_brier = brier_score_loss(cv_df["Label"], cv_df["pred_prob"])
 print("-" * 44)
 print(f"{'OVERALL':>8}  {len(cv_df):>5}  {overall_acc:>6.3f}  {overall_ll:>8.4f}  {overall_brier:>7.4f}")
 cv_df.to_parquet(OUT_DIR / "cv_predictions.parquet", index=False)
+cv_df.to_csv(OUT_DIR / "cv_predictions.csv", index=False)  # for cloud deployment
 
 
 # ── Train final model on ALL data ─────────────────────────────────────────────
@@ -181,6 +205,9 @@ final_lgb.fit(
 final_lr = make_lr()
 final_lr.fit(X, y)
 
+final_mlp = make_mlp()
+final_mlp.fit(X, y)
+
 # Save feature importances
 importance_xgb = pd.Series(
     final_xgb.feature_importances_, index=feature_cols
@@ -197,7 +224,10 @@ print(importance_xgb.head(20).to_string())
 
 # Persist models
 import joblib
-joblib.dump({"xgb": final_xgb, "lgb": final_lgb, "lr": final_lr,
-             "feature_cols": feature_cols}, OUT_DIR / "models.pkl")
+joblib.dump({
+    "xgb": final_xgb, "lgb": final_lgb, "lr": final_lr, "mlp": final_mlp,
+    "feature_cols": feature_cols,
+    "ensemble_weights": (0.41, 0.41, 0.08, 0.10),  # xgb, lgb, lr, mlp
+}, OUT_DIR / "models.pkl")
 print(f"\nModels saved → outputs/models.pkl")
 print(f"CV log-loss: {overall_ll:.4f} | Accuracy: {overall_acc:.3f}")

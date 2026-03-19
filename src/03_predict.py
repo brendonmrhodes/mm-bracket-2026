@@ -39,13 +39,29 @@ else:
 xgb_model    = bundle["xgb"]
 lgb_model    = bundle["lgb"]
 lr_model     = bundle["lr"]
+mlp_model    = bundle.get("mlp", None)
 feature_cols = bundle["feature_cols"]
-weights = bundle.get("ensemble_weights", (0.45, 0.45, 0.10))
+weights = bundle.get("ensemble_weights", (0.41, 0.41, 0.08, 0.10))
 if isinstance(weights, dict):
-    w_xgb, w_lgb, w_lr = weights["xgb"], weights["lgb"], weights["lr"]
+    w_xgb = weights.get("xgb", 0.38)
+    w_lgb = weights.get("lgb", 0.38)
+    w_lr  = weights.get("lr",  0.09)
+    w_mlp = weights.get("mlp", 0.15) if mlp_model else 0.0
+elif len(weights) == 4:
+    w_xgb, w_lgb, w_lr, w_mlp = weights
+    if mlp_model is None:
+        w_mlp = 0.0
 else:
     w_xgb, w_lgb, w_lr = weights
-print(f"Ensemble weights — XGB: {w_xgb:.2f}  LGB: {w_lgb:.2f}  LR: {w_lr:.2f}\n")
+    w_mlp = 0.0
+# Renormalize if MLP absent
+if mlp_model is None and (w_xgb + w_lgb + w_lr) < 0.99:
+    total = w_xgb + w_lgb + w_lr
+    w_xgb /= total; w_lgb /= total; w_lr /= total
+if mlp_model:
+    print(f"Ensemble weights — XGB: {w_xgb:.2f}  LGB: {w_lgb:.2f}  LR: {w_lr:.2f}  MLP: {w_mlp:.2f}\n")
+else:
+    print(f"Ensemble weights — XGB: {w_xgb:.2f}  LGB: {w_lgb:.2f}  LR: {w_lr:.2f}\n")
 
 # ── Load features & seeds ──────────────────────────────────────────────────────
 features = pd.read_parquet(DATA_DIR / "team_season_features.parquet")
@@ -64,9 +80,13 @@ print(f"Tournament teams: {len(team_list)}")
 
 
 # ── Win probability function ───────────────────────────────────────────────────
-def build_prob_lookup(team_list, feat_map, feature_cols, xgb_m, lgb_m, lr_m, weights):
+def build_prob_lookup(team_list, feat_map, feature_cols, xgb_m, lgb_m, lr_m, weights, mlp_m=None):
     """Pre-compute win probabilities for all possible matchups."""
-    w_xgb, w_lgb, w_lr = weights
+    if len(weights) == 4:
+        w_xgb, w_lgb, w_lr, w_mlp = weights
+    else:
+        w_xgb, w_lgb, w_lr = weights
+        w_mlp = 0.0
     prob = {}
     pairs = list(itertools.combinations(sorted(team_list), 2))
 
@@ -97,7 +117,11 @@ def build_prob_lookup(team_list, feat_map, feature_cols, xgb_m, lgb_m, lr_m, wei
     p_xgb = xgb_m.predict_proba(X)[:, 1]
     p_lgb = lgb_m.predict_proba(X)[:, 1]
     p_lr  = lr_m.predict_proba(X)[:, 1]
-    p_ens = np.clip(w_xgb * p_xgb + w_lgb * p_lgb + w_lr * p_lr, 0.01, 0.99)
+    p_ens = w_xgb * p_xgb + w_lgb * p_lgb + w_lr * p_lr
+    if mlp_m is not None and w_mlp > 0:
+        p_mlp = mlp_m.predict_proba(X)[:, 1]
+        p_ens = p_ens + w_mlp * p_mlp
+    p_ens = np.clip(p_ens, 0.01, 0.99)
 
     for (t1, t2), p in zip(meta, p_ens):
         prob[(t1, t2)] = p        # P(t1 wins) where t1 < t2
@@ -109,7 +133,9 @@ def build_prob_lookup(team_list, feat_map, feature_cols, xgb_m, lgb_m, lr_m, wei
 print("Computing matchup probabilities...")
 prob_lookup = build_prob_lookup(
     team_list, feat_2026, feature_cols,
-    xgb_model, lgb_model, lr_model, (w_xgb, w_lgb, w_lr)
+    xgb_model, lgb_model, lr_model,
+    (w_xgb, w_lgb, w_lr, w_mlp),
+    mlp_m=mlp_model,
 )
 
 def win_prob(t1, t2):

@@ -50,6 +50,35 @@ print(f"  Elo           : {len(elo):,} rows")
 print(f"  Conf tourney  : {len(conf_tourn):,} rows")
 print(f"  Tourney hist  : {len(tourn_hist):,} rows")
 
+# Coach features — optional, load if available
+coach_features = None
+coach_path = RAW_DIR / "coach_features.parquet"
+if coach_path.exists():
+    coach_features = pd.read_parquet(coach_path)
+    print(f"  Coach features: {len(coach_features):,} rows ({coach_features['Season'].min()}–{coach_features['Season'].max()})")
+else:
+    print(f"  Coach features: not available (run fetch_coach_data.py)")
+
+# Sports-Reference SRS data — optional
+srs_features = None
+srs_path = RAW_DIR / "sportsref_basic_all.parquet"
+if srs_path.exists():
+    srs_raw = pd.read_parquet(srs_path)
+    # Extract SRS column and map to TeamID
+    team_col = next((c for c in srs_raw.columns if c.lower() in ("team", "school", "school_name")), None)
+    if team_col:
+        srs_raw = srs_raw.rename(columns={"season": "Season", team_col: "team"})
+        srs_raw["TeamID"] = srs_raw["team"].apply(lambda n: lookup_team_id(n, name_map))
+        srs_cols_avail = [c for c in srs_raw.columns if any(x in c.lower() for x in ["srs", "sos", "pace", "ortg", "efg"])]
+        keep = ["Season", "TeamID"] + srs_cols_avail[:8]  # cap at 8 extra cols
+        srs_features = srs_raw[keep].dropna(subset=["TeamID"]).copy()
+        srs_features["TeamID"] = srs_features["TeamID"].astype(int)
+        # Rename to avoid collisions
+        srs_features.columns = ["Season", "TeamID"] + [f"srs_{c}" for c in srs_features.columns[2:]]
+        print(f"  Sports-Ref SRS: {len(srs_features):,} rows, cols: {list(srs_features.columns[:6])}")
+    else:
+        print(f"  Sports-Ref SRS: loaded but no team column found")
+
 # KenPom extended — optional, load if available
 kp_four_factors = None
 kp_height_exp   = None
@@ -118,7 +147,7 @@ def season_aggregates(game_df):
     game_df["weight"] = np.where(game_df["DayNum"] >= 100, 2.0, 1.0)
     feat_cols = ["eFG","TOV","ORB","FTR","PPP",
                  "Def_eFG","Def_TOV","Def_ORB","Def_FTR","Def_PPP",
-                 "FGA3_rate","ScoreDiff"]
+                 "FGA3_rate"]
     records = []
     for (season, team), grp in game_df.groupby(["Season", "TeamID"]):
         w = grp["weight"].values
@@ -144,7 +173,14 @@ print(f"  Box feature rows: {len(box_features):,}")
 
 # ── 3. Massey ordinals composite rank ─────────────────────────────────────────
 print("\nExtracting Massey ordinals...")
-SYSTEMS = ["POM", "BPI", "NET", "SAG", "MOR", "KPI", "DOK", "WOL", "COL", "RPI"]
+# Core systems (all seasons) + high-accuracy systems with partial coverage
+# Added: MAS, WLK, BIH, DOL, DUN, WIL, PGH, RTH, KPK, DCI, LMC for broader consensus
+SYSTEMS = [
+    "POM", "MOR", "SAG", "COL", "WLK", "MAS", "DOL", "BIH", "DUN", "WIL",
+    "DOK", "WOL", "RTH", "PGH", "KPK", "DCI", "LMC",
+    # Partial-coverage but high quality
+    "NET", "RPI", "BPI", "KPI",
+]
 massey_pre = massey[massey["RankingDayNum"] <= 133].copy()
 massey_latest = (massey_pre.sort_values("RankingDayNum")
                  .groupby(["Season","SystemName","TeamID"]).last().reset_index())
@@ -154,8 +190,12 @@ massey_pivot = (massey_latest[massey_latest["SystemName"].isin(SYSTEMS)]
 massey_pivot.columns.name = None
 massey_pivot.columns = ["Season","TeamID"] + [f"rank_{c}" for c in massey_pivot.columns[2:]]
 rank_cols = [c for c in massey_pivot.columns if c.startswith("rank_")]
+# Use all available systems per row for composite (handles partial coverage gracefully)
 massey_pivot["rank_composite"] = massey_pivot[rank_cols].mean(axis=1)
-print(f"  Massey pivot: {massey_pivot.shape}")
+# High-quality consensus: average of the 3 best long-running systems
+core_systems = [f"rank_{s}" for s in ["POM", "MOR", "SAG"] if f"rank_{s}" in massey_pivot.columns]
+massey_pivot["rank_consensus"] = massey_pivot[core_systems].mean(axis=1)
+print(f"  Massey pivot: {massey_pivot.shape} ({len(rank_cols)} systems)")
 
 
 # ── 4. KenPom — add TeamID via name matching ──────────────────────────────────
@@ -225,6 +265,24 @@ features = (
     .merge(seeds[["Season","TeamID","SeedNum","Region"]], on=["Season","TeamID"], how="left")
 )
 
+# Optional: merge coach features
+if coach_features is not None:
+    coach_cols = ["Season","TeamID","coach_tenure","coach_win_pct",
+                  "coach_tourn_apps","coach_tourn_wins","coach_f4s","coach_champs"]
+    coach_keep = [c for c in coach_cols if c in coach_features.columns]
+    features = features.merge(
+        coach_features[coach_keep].drop_duplicates(["Season","TeamID"]),
+        on=["Season","TeamID"], how="left"
+    )
+    print(f"  Coach feature coverage: {features['coach_tenure'].notna().mean():.1%}")
+
+# Optional: merge SRS features
+if srs_features is not None:
+    features = features.merge(srs_features, on=["Season","TeamID"], how="left")
+    srs_check = [c for c in srs_features.columns if c.startswith("srs_")]
+    if srs_check:
+        print(f"  SRS feature coverage: {features[srs_check[0]].notna().mean():.1%}")
+
 # Fill conf tourney features for teams that didn't participate (auto-bids that skipped)
 features["conf_tourney_wins"]      = features["conf_tourney_wins"].fillna(0)
 features["conf_tourney_winpct"]    = features["conf_tourney_winpct"].fillna(0)
@@ -264,6 +322,18 @@ def _merge_kenpom_ext(features, df, prefix, key_cols):
             df[c] = pd.to_numeric(df[c], errors="coerce")
     # Drop columns that are entirely NaN after coercion
     df = df.dropna(axis=1, how="all")
+    # Drop columns that appear to be ordinal ranks (range ~[1, 365] with high std)
+    # These are detected by: min close to 1, max between 100-400, std > 80
+    # Real efficiency values (adjOE ~80-140) have std ~5-10, not 80+
+    # Real percentages (eFG% ~40-65) also have much lower std
+    for c in list(df.columns):
+        if c in skip_ids:
+            continue
+        vals = df[c].dropna()
+        if len(vals) < 10:
+            continue
+        if vals.min() >= 0.5 and vals.max() >= 100 and vals.max() <= 420 and vals.std() > 60:
+            df = df.drop(columns=[c])
     # Rename numeric columns to avoid collisions
     rename_map = {c: f"{prefix}_{c}" for c in df.columns
                   if c not in skip_ids and not c.startswith(prefix)}

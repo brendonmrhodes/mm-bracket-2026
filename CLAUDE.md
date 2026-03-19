@@ -8,7 +8,7 @@ Build a competitive NCAA Men's Basketball Tournament prediction algorithm that:
 3. Supports bracket pool strategy via expected value (EV) analysis
 4. Is the most accurate model possible using publicly available data
 
-Current performance (v3, pre-tuning): **86.6% accuracy, 0.320 log-loss** via walk-forward cross-validation across 2008–2025 tournaments. Baseline (seed-only) is ~68%.
+Current performance (v4, pre-tuning): **86.4% accuracy, 0.333 log-loss** via walk-forward cross-validation across 2008–2025 tournaments. Baseline (seed-only) is ~68%. v3 was 86.6%/0.320 (smaller feature set). Optuna tuning in progress — see outputs/models_tuned.pkl when done.
 
 ---
 
@@ -199,7 +199,8 @@ LightGBM: n_estimators=500, max_depth=4, learning_rate=0.03,
 | v1 | Box scores + Massey ordinal ranks only | 70.2% | 0.582 |
 | v2 | + Real KenPom AdjEM/AdjO/AdjD + Torvik BARTHAG | 76.6% | 0.487 |
 | v3 | + Elo momentum (last10, momentum, peak, late_winpct) | **86.6%** | **0.320** |
-| v4 | + Optuna tuning + isotonic calibration (in progress) | TBD | TBD |
+| v4 | + 21 Massey systems, MLP ensemble, KenPom Four Factors/Height/Misc Stats | 86.4% | 0.333 |
+| v4-tuned | + Optuna tuning + isotonic calibration (in progress) | TBD | TBD |
 
 ---
 

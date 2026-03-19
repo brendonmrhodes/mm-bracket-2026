@@ -33,6 +33,7 @@ import lightgbm as lgb
 from sklearn.linear_model import LogisticRegression
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.preprocessing import StandardScaler
+from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import log_loss, brier_score_loss, accuracy_score
 
@@ -52,7 +53,7 @@ CV_START_SEASON = 2015
 SEED = 42
 
 # Default ensemble weights from 02_model.py (used for comparison baseline)
-DEFAULT_WEIGHTS = (0.45, 0.45, 0.10)  # xgb, lgb, lr
+DEFAULT_WEIGHTS = (0.41, 0.41, 0.08, 0.10)  # xgb, lgb, lr, mlp
 
 
 # ── Load data ─────────────────────────────────────────────────────────────────
@@ -158,10 +159,10 @@ def walk_forward_logloss_lgb(params: dict) -> float:
     return float(np.mean(losses))
 
 
-def walk_forward_ensemble(w_xgb: float, w_lgb: float, w_lr: float,
+def walk_forward_ensemble(w_xgb: float, w_lgb: float, w_lr: float, w_mlp: float,
                           xgb_params: dict, lgb_params: dict) -> float:
     """
-    Evaluate an ensemble blend (w_xgb, w_lgb, w_lr) using walk-forward CV.
+    Evaluate an ensemble blend (w_xgb, w_lgb, w_lr, w_mlp) using walk-forward CV.
     Weights are assumed to already sum to 1.
     Returns mean log-loss across all evaluation folds.
     """
@@ -203,19 +204,36 @@ def walk_forward_ensemble(w_xgb: float, w_lgb: float, w_lr: float,
             ],
         )
 
-        # Logistic Regression — use the same X_t split as tree models
-        # (avoids biasing ensemble weights toward LR by giving it more data)
+        # Logistic Regression
         lr_model = Pipeline([
             ("scaler", StandardScaler()),
             ("model", LogisticRegression(C=0.1, max_iter=1000, random_state=SEED)),
         ])
         lr_model.fit(X_t, y_t)
 
+        # MLP
+        mlp_model = Pipeline([
+            ("scaler", StandardScaler()),
+            ("model", MLPClassifier(
+                hidden_layer_sizes=(128, 64, 32),
+                activation="relu",
+                max_iter=1000,
+                random_state=SEED,
+                learning_rate_init=0.001,
+                early_stopping=True,
+                validation_fraction=0.1,
+                n_iter_no_change=20,
+                alpha=0.01,
+            )),
+        ])
+        mlp_model.fit(X_t, y_t)
+
         p_xgb = xgb_model.predict_proba(X_te)[:, 1]
         p_lgb = lgb_model.predict_proba(X_te)[:, 1]
         p_lr  = lr_model.predict_proba(X_te)[:, 1]
+        p_mlp = mlp_model.predict_proba(X_te)[:, 1]
 
-        p_ens = w_xgb * p_xgb + w_lgb * p_lgb + w_lr * p_lr
+        p_ens = w_xgb * p_xgb + w_lgb * p_lgb + w_lr * p_lr + w_mlp * p_mlp
         p_ens = np.clip(p_ens, 1e-7, 1 - 1e-7)
         losses.append(log_loss(y_te, p_ens))
 
@@ -294,25 +312,27 @@ print("PHASE 3: Tuning ensemble weights (50 trials)")
 print("=" * 60)
 
 def ensemble_objective(trial: optuna.Trial) -> float:
-    # Sample two weights; derive the third so they sum to 1.
-    # w_xgb and w_lgb each in [0.1, 0.8]; remainder goes to LR (clamped >= 0.05).
-    w_xgb_raw = trial.suggest_float("w_xgb", 0.1, 0.8)
-    w_lgb_raw = trial.suggest_float("w_lgb", 0.1, 0.8)
+    # Sample three weights; derive the fourth (MLP) so they sum to 1.
+    # Enforce: XGB+LGB >= 0.50, MLP >= 0.05, LR >= 0.03
+    w_xgb_raw = trial.suggest_float("w_xgb", 0.20, 0.65)
+    w_lgb_raw = trial.suggest_float("w_lgb", 0.20, 0.65)
+    w_mlp_raw = trial.suggest_float("w_mlp", 0.05, 0.30)
 
-    total = w_xgb_raw + w_lgb_raw
-    if total > 0.95:
-        # Rescale so LR gets at least 0.05
-        scale  = 0.95 / total
-        w_xgb  = w_xgb_raw * scale
-        w_lgb  = w_lgb_raw * scale
+    total = w_xgb_raw + w_lgb_raw + w_mlp_raw
+    if total > 0.97:
+        scale     = 0.97 / total
+        w_xgb     = w_xgb_raw * scale
+        w_lgb     = w_lgb_raw * scale
+        w_mlp     = w_mlp_raw * scale
     else:
         w_xgb = w_xgb_raw
         w_lgb = w_lgb_raw
+        w_mlp = w_mlp_raw
 
-    w_lr = 1.0 - w_xgb - w_lgb
+    w_lr = 1.0 - w_xgb - w_lgb - w_mlp
 
     return walk_forward_ensemble(
-        w_xgb, w_lgb, w_lr,
+        w_xgb, w_lgb, w_lr, w_mlp,
         best_xgb_params, best_lgb_params,
     )
 
@@ -324,22 +344,25 @@ ens_study = optuna.create_study(
 )
 ens_study.optimize(ensemble_objective, n_trials=50, show_progress_bar=True)
 
-# Reconstruct the final normalised weights from the best trial
+# Reconstruct final weights from the best trial
 _w_xgb_raw = ens_study.best_params["w_xgb"]
 _w_lgb_raw = ens_study.best_params["w_lgb"]
-_total     = _w_xgb_raw + _w_lgb_raw
-if _total > 0.95:
-    _scale     = 0.95 / _total
+_w_mlp_raw = ens_study.best_params["w_mlp"]
+_total     = _w_xgb_raw + _w_lgb_raw + _w_mlp_raw
+if _total > 0.97:
+    _scale     = 0.97 / _total
     best_w_xgb = _w_xgb_raw * _scale
     best_w_lgb = _w_lgb_raw * _scale
+    best_w_mlp = _w_mlp_raw * _scale
 else:
     best_w_xgb = _w_xgb_raw
     best_w_lgb = _w_lgb_raw
-best_w_lr = 1.0 - best_w_xgb - best_w_lgb
+    best_w_mlp = _w_mlp_raw
+best_w_lr = 1.0 - best_w_xgb - best_w_lgb - best_w_mlp
 
 best_ens_loss = ens_study.best_value
 print(f"\nBest ensemble log-loss: {best_ens_loss:.5f}")
-print(f"Best weights -> XGB: {best_w_xgb:.3f}  LGB: {best_w_lgb:.3f}  LR: {best_w_lr:.3f}")
+print(f"Best weights -> XGB: {best_w_xgb:.3f}  LGB: {best_w_lgb:.3f}  LR: {best_w_lr:.3f}  MLP: {best_w_mlp:.3f}")
 
 
 # ── Save best params ──────────────────────────────────────────────────────────
@@ -350,6 +373,7 @@ best_params_all = {
         "xgb": best_w_xgb,
         "lgb": best_w_lgb,
         "lr":  best_w_lr,
+        "mlp": best_w_mlp,
     },
     "cv_log_loss": {
         "xgb_only":  best_xgb_loss,
@@ -439,16 +463,36 @@ final_lr = Pipeline([
 ])
 final_lr.fit(X, y)
 
+# --- MLP (neural net) ---
+print("  Fitting MLP neural network (full data)...")
+final_mlp = Pipeline([
+    ("scaler", StandardScaler()),
+    ("model", MLPClassifier(
+        hidden_layer_sizes=(128, 64, 32),
+        activation="relu",
+        max_iter=1000,
+        random_state=SEED,
+        learning_rate_init=0.001,
+        early_stopping=True,
+        validation_fraction=0.1,
+        n_iter_no_change=20,
+        alpha=0.01,
+    )),
+])
+final_mlp.fit(X, y)
+
 # Save
 model_bundle = {
     "xgb":             final_xgb,
     "lgb":             final_lgb,
     "lr":              final_lr,
+    "mlp":             final_mlp,
     "feature_cols":    feature_cols,
     "ensemble_weights": {
         "xgb": best_w_xgb,
         "lgb": best_w_lgb,
         "lr":  best_w_lr,
+        "mlp": best_w_mlp,
     },
     "best_params":     best_params_all,
 }
@@ -479,7 +523,7 @@ def _default_lgb_params():
     )
 
 
-def _collect_cv_preds(xgb_params, lgb_params, w_xgb, w_lgb, w_lr):
+def _collect_cv_preds(xgb_params, lgb_params, w_xgb, w_lgb, w_lr, w_mlp=0.0):
     """
     Run the full walk-forward CV with given params and blend weights.
     Returns a DataFrame with columns [Label, pred_prob].
@@ -526,10 +570,25 @@ def _collect_cv_preds(xgb_params, lgb_params, w_xgb, w_lgb, w_lr):
         ])
         lr_m.fit(X_t, y_t)
 
+        mlp_m = Pipeline([
+            ("scaler", StandardScaler()),
+            ("model", MLPClassifier(
+                hidden_layer_sizes=(128, 64, 32), activation="relu",
+                max_iter=1000, random_state=SEED, learning_rate_init=0.001,
+                early_stopping=True, validation_fraction=0.1,
+                n_iter_no_change=20, alpha=0.01,
+            )),
+        ])
+        mlp_m.fit(X_t, y_t)
+
         p_xgb = xgb_m.predict_proba(X_te)[:, 1]
         p_lgb = lgb_m.predict_proba(X_te)[:, 1]
         p_lr  = lr_m.predict_proba(X_te)[:, 1]
-        p_ens = np.clip(w_xgb * p_xgb + w_lgb * p_lgb + w_lr * p_lr, 1e-7, 1 - 1e-7)
+        p_mlp = mlp_m.predict_proba(X_te)[:, 1]
+        p_ens = np.clip(
+            w_xgb * p_xgb + w_lgb * p_lgb + w_lr * p_lr + w_mlp * p_mlp,
+            1e-7, 1 - 1e-7
+        )
 
         for label, prob in zip(y_te, p_ens):
             records.append({"Label": int(label), "pred_prob": float(prob)})
@@ -540,13 +599,13 @@ def _collect_cv_preds(xgb_params, lgb_params, w_xgb, w_lgb, w_lr):
 print("\nEvaluating DEFAULT params on walk-forward CV...")
 df_default = _collect_cv_preds(
     _default_xgb_params(), _default_lgb_params(),
-    DEFAULT_WEIGHTS[0], DEFAULT_WEIGHTS[1], DEFAULT_WEIGHTS[2],
+    DEFAULT_WEIGHTS[0], DEFAULT_WEIGHTS[1], DEFAULT_WEIGHTS[2], DEFAULT_WEIGHTS[3],
 )
 
 print("Evaluating TUNED params on walk-forward CV...")
 df_tuned = _collect_cv_preds(
     best_xgb_params, best_lgb_params,
-    best_w_xgb, best_w_lgb, best_w_lr,
+    best_w_xgb, best_w_lgb, best_w_lr, best_w_mlp,
 )
 
 
