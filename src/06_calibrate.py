@@ -261,7 +261,10 @@ def apply_temperature(p, T):
 def run_monte_carlo(prob_fn, temperature=1.0, n_sim=N_SIM):
     """
     Run bracket simulation using prob_fn(t1, t2) → P(t1 wins).
-    If temperature > 1, scale each per-game probability toward 0.5.
+
+    Temperature is applied starting from R32 games onward — NOT to R64 games.
+    This keeps first-round (R32 display) probabilities accurate while still
+    reducing championship over-concentration from compounding in later rounds.
     """
     seeded = {}
     for _, row in seed_2026.iterrows():
@@ -274,7 +277,13 @@ def run_monte_carlo(prob_fn, temperature=1.0, n_sim=N_SIM):
 
     reach = {t: {r: 0 for r in ROUND_NAMES} for t in team_list}
 
+    def sim_game_raw(t1, t2):
+        """No temperature — used for R64 and First Four."""
+        p = prob_fn(t1, t2)
+        return t1 if np.random.random() < p else t2
+
     def sim_game_t(t1, t2):
+        """Temperature-scaled — used from R32 onward to reduce compounding."""
         p = prob_fn(t1, t2)
         if temperature != 1.0:
             p = apply_temperature(p, temperature)
@@ -291,9 +300,10 @@ def run_monte_carlo(prob_fn, temperature=1.0, n_sim=N_SIM):
             else:
                 resolved[seed_str] = tid
 
+        # First Four: raw probabilities (no temperature)
         for key, pair in list(resolved.items()):
             if isinstance(pair, list) and len(pair) == 2:
-                resolved[key] = sim_game_t(pair[0], pair[1])
+                resolved[key] = sim_game_raw(pair[0], pair[1])
 
         bracket = [1, 16, 8, 9, 5, 12, 4, 13, 6, 11, 3, 14, 7, 10, 2, 15]
         teams = []
@@ -307,15 +317,18 @@ def run_monte_carlo(prob_fn, temperature=1.0, n_sim=N_SIM):
         for round_name in ["R32", "S16", "E8"]:
             if len(teams) <= 1:
                 break
+            # R64 games (which produce R32 survivors): raw probabilities
+            # R32+ games: temperature-scaled to reduce compounding bias
+            game_fn = sim_game_raw if round_name == "R32" else sim_game_t
             next_round = []
             for i in range(0, len(teams) - 1, 2):
-                w = sim_game_t(teams[i], teams[i + 1])
+                w = game_fn(teams[i], teams[i + 1])
                 next_round.append(w)
                 round_reached[w] = round_name
             teams = next_round
 
         if len(teams) == 2:
-            winner = sim_game_t(teams[0], teams[1])
+            winner = sim_game_t(teams[0], teams[1])   # E8 final: temperature
         elif len(teams) == 1:
             winner = teams[0]
         else:
