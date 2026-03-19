@@ -36,21 +36,27 @@ PREDICT_SEASON = 2026
 N_CANDIDATES   = 5_000   # simulations to draw from
 
 # ── Probability-realism controls ───────────────────────────────────────────────
-# Only consider the top PROB_POOL_FRAC of simulations by bracket probability
-# before applying diversity selection.  0.20 = top 20% (1,000 of 5,000).
-# Raising this lets in more variety; lowering it keeps brackets more "chalk".
+# Pool filtering uses DEEP-round log-probability only (R32 onwards).
+# First-round upset brackets are NOT penalised — a bracket that picks a 12-5
+# upset but has a great Final Four path will survive the filter.
+# 0.20 = keep the top 20% of brackets ranked by their R32-onwards log-prob.
 PROB_POOL_FRAC  = 0.20
 
 # In the diversity scoring, blend min-distance (diversity) with bracket
 # probability.  score = min_distance * prob_rank_score ^ PROB_BLEND_ALPHA
-# 0.0 = pure diversity (old behaviour)  |  1.0 = strongly probability-weighted
+# 0.0 = pure diversity  |  1.0 = strongly probability-weighted
 PROB_BLEND_ALPHA = 0.6
 
-# Round weights for diversity metric — later rounds count exponentially more
+# Round weights for diversity metric — later rounds count exponentially more.
+# First-round (R64) weight is deliberately raised so the greedy algorithm
+# actively seeks brackets with DIFFERENT upset patterns, not just the same
+# 11-6 or 12-5 pick repeated across all 19 brackets.
 ROUND_WEIGHTS = {
-    "R64": 1, "R32": 2, "S16": 4, "E8": 8,
+    "R64": 1, "R32": 6, "S16": 4, "E8": 8,
     "F4": 16, "NCG": 64, "Champion": 128,
 }
+# NOTE: keys starting with "R32_" are first-round (Round of 64) games — the
+# winner advances *to* the Round of 32.  The weight above (6) applies to them.
 
 # ── Historical plausibility constraints ────────────────────────────────────────
 # Hard seed caps: no team seeded higher than this has reached the stage (2003–2025)
@@ -223,18 +229,25 @@ def build_blended_lookup(team_list, feat_map, feat_cols,
 
 
 # ── Simulate one complete bracket ─────────────────────────────────────────────
-def simulate_bracket(win_prob, seeded, seed_map=None, feat_map=None):
-    """Return (results, champion, log_prob) for one complete bracket.
+def _is_first_round(key):
+    """True for Round-of-64 and First Four games (winner advances to R32)."""
+    return key.startswith("R32_") or key.startswith("FF_")
 
-    log_prob is the sum of log(p_winner) across all 63 games — a measure of
-    how probable this specific bracket is under the model.
+
+def simulate_bracket(win_prob, seeded, seed_map=None, feat_map=None):
+    """Return (results, champion, log_prob_all, log_prob_deep) for one bracket.
+
+    log_prob_all  — log-probability of every game outcome (all 63 games)
+    log_prob_deep — log-probability of R32-onwards games only; used for pool
+                    filtering so that upset-heavy first rounds aren't penalised
     """
-    results  = {}
-    log_prob = 0.0
-    REGIONS  = ["W", "X", "Y", "Z"]
+    results        = {}
+    log_prob_all   = 0.0
+    log_prob_deep  = 0.0
+    REGIONS        = ["W", "X", "Y", "Z"]
 
     def sim(a, b, key):
-        nonlocal log_prob
+        nonlocal log_prob_all, log_prob_deep
         if seed_map is not None:
             p = _constrained_prob(a, b, key, win_prob, seed_map, feat_map)
         else:
@@ -243,7 +256,10 @@ def simulate_bracket(win_prob, seeded, seed_map=None, feat_map=None):
             w, p_win = a, p
         else:
             w, p_win = b, 1.0 - p
-        log_prob += np.log(max(p_win, 1e-9))
+        lp = np.log(max(p_win, 1e-9))
+        log_prob_all  += lp
+        if not _is_first_round(key):
+            log_prob_deep += lp
         results[key] = w
         return w
 
@@ -297,7 +313,7 @@ def simulate_bracket(win_prob, seeded, seed_map=None, feat_map=None):
         champion = sim(finalists[0], finalists[1], "NCG")
         results["Champion"] = champion
 
-    return results, champion, log_prob
+    return results, champion, log_prob_all, log_prob_deep
 
 
 # ── Diversity metric ───────────────────────────────────────────────────────────
@@ -335,18 +351,20 @@ def select_diverse(candidates, n, seed_map, t_name):
       4. Start from the single highest-probability bracket (not just most common
          champion) so bracket 1 is always the model's best single prediction.
     """
-    # Step 1 — pre-filter to top probability pool
-    log_probs = np.array([lp for _, _, lp in candidates])
-    cutoff    = np.percentile(log_probs, (1.0 - PROB_POOL_FRAC) * 100)
-    pool      = [c for c in candidates if c[2] >= cutoff]
+    # Step 1 — pre-filter by DEEP-round log-probability (index 3).
+    # First-round upsets don't lower a bracket's eligibility; only the quality
+    # of deep-tournament predictions (R32 onwards) gates entry to the pool.
+    deep_lps = np.array([c[3] for c in candidates])
+    cutoff   = np.percentile(deep_lps, (1.0 - PROB_POOL_FRAC) * 100)
+    pool     = [c for c in candidates if c[3] >= cutoff]
     if len(pool) < n:
         pool = candidates  # safety fallback
 
-    # Step 2 — normalise log-probs to [0, 1] within the pool
-    pool_lp   = np.array([c[2] for c in pool])
+    # Step 2 — normalise deep log-probs to [0, 1] for blended scoring
+    pool_lp        = np.array([c[3] for c in pool])
     lp_min, lp_max = pool_lp.min(), pool_lp.max()
-    lp_range  = lp_max - lp_min if lp_max > lp_min else 1.0
-    prob_rank = {id(c): (c[2] - lp_min) / lp_range for c in pool}
+    lp_range       = lp_max - lp_min if lp_max > lp_min else 1.0
+    prob_rank      = {id(c): (c[3] - lp_min) / lp_range for c in pool}
 
     # Step 3 — start with the highest-probability bracket overall
     first     = max(pool, key=lambda c: c[2])
@@ -380,7 +398,7 @@ def format_brackets(selected, seed_2026, t_name):
     rows = []
     summary_rows = []
 
-    for idx, (results, champion, _lp) in enumerate(selected, 1):
+    for idx, (results, champion, _lp_all, _lp_deep) in enumerate(selected, 1):
         label = f"Bracket_{idx:02d}"
 
         # Pull key picks
@@ -442,8 +460,8 @@ def main(n_brackets=19):
     candidates = []
     champ_tally = defaultdict(int)
     for _ in range(N_CANDIDATES):
-        res, champ, lp = simulate_bracket(win_prob, seeded, seed_map, feat_2026)
-        candidates.append((res, champ, lp))
+        res, champ, lp_all, lp_deep = simulate_bracket(win_prob, seeded, seed_map, feat_2026)
+        candidates.append((res, champ, lp_all, lp_deep))
         if champ:
             champ_tally[champ] += 1
 
