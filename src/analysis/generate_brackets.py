@@ -41,6 +41,77 @@ ROUND_WEIGHTS = {
     "F4": 16, "NCG": 64, "Champion": 128,
 }
 
+# ── Historical plausibility constraints ────────────────────────────────────────
+# Hard seed caps: no team seeded higher than this has reached the stage (2003–2025)
+#   E8: Saint Peter's (15-seed, 2022); F4: George Mason/VCU/Loyola/NC State (11-seed)
+#   NCG/Champion: Butler/Kentucky/UNC (8-seed)
+ROUND_SEED_CAPS = {
+    "E8":       15,   # max seed to reach Elite Eight
+    "F4":       11,   # max seed to reach Final Four
+    "NCG":       8,   # max seed to reach Championship Game
+    "Champion":  8,   # max seed to win the championship
+}
+
+# Soft efficiency floors (adjEM): teams below these get their win prob penalized
+#   Based on 5th-percentile adjEM of historical teams at each stage (2003–2025)
+#   F4 floor=14: NC State 2024 had 15.9, Loyola 2018 had 16.4 as all-time F4 lows
+#   NCG floor=16: Butler 2011 had 16.5 as the all-time championship game low
+ROUND_EFF_FLOORS = {
+    "E8":        5.0,   # Oral Roberts 2021 (4.83) is the only E8 team below 5
+    "F4":       14.0,   # filters teams that historically never reach F4
+    "NCG":      16.0,   # championship game requires elite efficiency
+    "Champion": 18.0,   # no champion has had adjEM below ~20
+}
+EFF_PENALTY = 0.15   # reduce win prob to 15% of raw value if below efficiency floor
+
+
+def _get_constraint_round(key):
+    """Map a game key to the stage the WINNER will advance into."""
+    if key.startswith("E8_"):        return "E8"
+    if key.startswith("RegFinal_"):  return "F4"
+    if key.startswith("F4_"):        return "NCG"
+    if key == "NCG":                 return "Champion"
+    return None
+
+
+def _constrained_prob(a, b, key, raw_prob_fn, seed_map, feat_map):
+    """
+    Adjust win probability with historical seed caps and efficiency floors.
+    - Seed cap violations → near-zero probability (0.02) for the ineligible team
+    - Efficiency floor violations → win prob * EFF_PENALTY (soft, not zero)
+    """
+    p = raw_prob_fn(a, b)
+    stage = _get_constraint_round(key)
+    if stage is None:
+        return p
+
+    s_a = seed_map.get(a, 8)
+    s_b = seed_map.get(b, 8)
+    cap = ROUND_SEED_CAPS[stage]
+
+    a_ok_seed = s_a <= cap
+    b_ok_seed = s_b <= cap
+
+    if not a_ok_seed and not b_ok_seed:
+        return 0.5    # both violate — fallback to coin flip (shouldn't happen)
+    elif not a_ok_seed:
+        return 0.02   # A can't advance; B wins with near-certainty
+    elif not b_ok_seed:
+        return 0.98   # B can't advance
+
+    # Efficiency floor (soft — penalise, don't block)
+    if stage in ROUND_EFF_FLOORS and feat_map is not None:
+        floor = ROUND_EFF_FLOORS[stage]
+        adj_a = float(feat_map.loc[a, "adjEM"]) if a in feat_map.index else 15.0
+        adj_b = float(feat_map.loc[b, "adjEM"]) if b in feat_map.index else 15.0
+        if adj_a < floor and adj_b >= floor:
+            p = p * EFF_PENALTY
+        elif adj_b < floor and adj_a >= floor:
+            p = 1.0 - (1.0 - p) * EFF_PENALTY
+        # If both below floor: no adjustment (let seed caps / raw prob decide)
+
+    return float(np.clip(p, 0.01, 0.99))
+
 
 # ── Load model & data ──────────────────────────────────────────────────────────
 def load_everything():
@@ -141,13 +212,16 @@ def build_blended_lookup(team_list, feat_map, feat_cols,
 
 
 # ── Simulate one complete bracket ─────────────────────────────────────────────
-def simulate_bracket(win_prob, seeded):
+def simulate_bracket(win_prob, seeded, seed_map=None, feat_map=None):
     """Return dict mapping game_key -> winning TeamID for all 63 games."""
     results = {}
     REGIONS = ["W", "X", "Y", "Z"]
 
     def sim(a, b, key):
-        p = win_prob(a, b)
+        if seed_map is not None:
+            p = _constrained_prob(a, b, key, win_prob, seed_map, feat_map)
+        else:
+            p = win_prob(a, b)
         w = a if np.random.random() < p else b
         results[key] = w
         return w
@@ -321,11 +395,11 @@ def main(n_brackets=19):
         w_xgb, w_lgb, w_lr, w_mlp, seed_map,
     )
 
-    print(f"Running {N_CANDIDATES:,} bracket simulations...")
+    print(f"Running {N_CANDIDATES:,} bracket simulations (with historical constraints)...")
     candidates = []
     champ_tally = defaultdict(int)
     for _ in range(N_CANDIDATES):
-        res, champ = simulate_bracket(win_prob, seeded)
+        res, champ = simulate_bracket(win_prob, seeded, seed_map, feat_2026)
         candidates.append((res, champ))
         if champ:
             champ_tally[champ] += 1

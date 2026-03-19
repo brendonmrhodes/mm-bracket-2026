@@ -2,132 +2,132 @@ Bracket,Game,Winner,Seed
 Bracket_01,R32_W_0,Duke,W01
 Bracket_01,R32_W_1,Ohio St,W08
 Bracket_01,R32_W_2,St John's,W05
-Bracket_01,R32_W_3,Cal Baptist,W13
+Bracket_01,R32_W_3,Kansas,W04
 Bracket_01,R32_W_4,Louisville,W06
 Bracket_01,R32_W_5,Michigan St,W03
 Bracket_01,R32_W_6,UCLA,W07
 Bracket_01,R32_W_7,Connecticut,W02
 Bracket_01,S16_W_0,Duke,W01
-Bracket_01,S16_W_1,St John's,W05
-Bracket_01,S16_W_2,Michigan St,W03
+Bracket_01,S16_W_1,Kansas,W04
+Bracket_01,S16_W_2,Louisville,W06
 Bracket_01,S16_W_3,Connecticut,W02
 Bracket_01,E8_W_0,Duke,W01
-Bracket_01,E8_W_1,Michigan St,W03
+Bracket_01,E8_W_1,Connecticut,W02
 Bracket_01,RegFinal_W,Duke,W01
-Bracket_01,FF_X16,Lehigh,X16a
-Bracket_01,R32_X_0,Florida,X01
-Bracket_01,R32_X_1,Clemson,X08
+Bracket_01,FF_X16,Prairie View,X16b
+Bracket_01,R32_X_0,Prairie View,X16b
+Bracket_01,R32_X_1,Iowa,X09
 Bracket_01,R32_X_2,Vanderbilt,X05
-Bracket_01,R32_X_3,Troy,X13
+Bracket_01,R32_X_3,Nebraska,X04
 Bracket_01,R32_X_4,North Carolina,X06
-Bracket_01,R32_X_5,Illinois,X03
+Bracket_01,R32_X_5,Penn,X14
 Bracket_01,R32_X_6,St Mary's CA,X07
 Bracket_01,R32_X_7,Houston,X02
-Bracket_01,S16_X_0,Florida,X01
+Bracket_01,S16_X_0,Iowa,X09
 Bracket_01,S16_X_1,Vanderbilt,X05
-Bracket_01,S16_X_2,Illinois,X03
+Bracket_01,S16_X_2,North Carolina,X06
 Bracket_01,S16_X_3,Houston,X02
-Bracket_01,E8_X_0,Florida,X01
+Bracket_01,E8_X_0,Vanderbilt,X05
 Bracket_01,E8_X_1,Houston,X02
-Bracket_01,RegFinal_X,Florida,X01
-Bracket_01,FF_Y11,Miami OH,Y11a
+Bracket_01,RegFinal_X,Houston,X02
+Bracket_01,FF_Y11,SMU,Y11b
 Bracket_01,R32_Y_0,Michigan,Y01
 Bracket_01,R32_Y_1,St Louis,Y09
-Bracket_01,R32_Y_2,Texas Tech,Y05
+Bracket_01,R32_Y_2,Akron,Y12
 Bracket_01,R32_Y_3,Alabama,Y04
 Bracket_01,R32_Y_4,Tennessee,Y06
 Bracket_01,R32_Y_5,Virginia,Y03
 Bracket_01,R32_Y_6,Kentucky,Y07
 Bracket_01,R32_Y_7,Iowa St,Y02
 Bracket_01,S16_Y_0,Michigan,Y01
-Bracket_01,S16_Y_1,Texas Tech,Y05
-Bracket_01,S16_Y_2,Tennessee,Y06
+Bracket_01,S16_Y_1,Akron,Y12
+Bracket_01,S16_Y_2,Virginia,Y03
 Bracket_01,S16_Y_3,Iowa St,Y02
 Bracket_01,E8_Y_0,Michigan,Y01
-Bracket_01,E8_Y_1,Iowa St,Y02
+Bracket_01,E8_Y_1,Virginia,Y03
 Bracket_01,RegFinal_Y,Michigan,Y01
 Bracket_01,R32_Z_0,Arizona,Z01
-Bracket_01,R32_Z_1,Utah St,Z09
+Bracket_01,R32_Z_1,Villanova,Z08
 Bracket_01,R32_Z_2,Wisconsin,Z05
-Bracket_01,R32_Z_3,Arkansas,Z04
+Bracket_01,R32_Z_3,Hawaii,Z13
 Bracket_01,R32_Z_4,BYU,Z06
-Bracket_01,R32_Z_5,Kennesaw,Z14
-Bracket_01,R32_Z_6,Miami FL,Z07
-Bracket_01,R32_Z_7,Queens NC,Z15
+Bracket_01,R32_Z_5,Gonzaga,Z03
+Bracket_01,R32_Z_6,Missouri,Z10
+Bracket_01,R32_Z_7,Purdue,Z02
 Bracket_01,S16_Z_0,Arizona,Z01
-Bracket_01,S16_Z_1,Arkansas,Z04
-Bracket_01,S16_Z_2,BYU,Z06
-Bracket_01,S16_Z_3,Miami FL,Z07
+Bracket_01,S16_Z_1,Wisconsin,Z05
+Bracket_01,S16_Z_2,Gonzaga,Z03
+Bracket_01,S16_Z_3,Purdue,Z02
 Bracket_01,E8_Z_0,Arizona,Z01
-Bracket_01,E8_Z_1,BYU,Z06
+Bracket_01,E8_Z_1,Purdue,Z02
 Bracket_01,RegFinal_Z,Arizona,Z01
 Bracket_01,F4_WX,Duke,W01
-Bracket_01,F4_YZ,Michigan,Y01
+Bracket_01,F4_YZ,Arizona,Z01
 Bracket_01,NCG,Duke,W01
 Bracket_01,Champion,Duke,W01
 Bracket_02,R32_W_0,Duke,W01
 Bracket_02,R32_W_1,Ohio St,W08
 Bracket_02,R32_W_2,St John's,W05
-Bracket_02,R32_W_3,Kansas,W04
+Bracket_02,R32_W_3,Cal Baptist,W13
 Bracket_02,R32_W_4,South Florida,W11
-Bracket_02,R32_W_5,N Dakota St,W14
+Bracket_02,R32_W_5,Michigan St,W03
 Bracket_02,R32_W_6,UCLA,W07
-Bracket_02,R32_W_7,Furman,W15
+Bracket_02,R32_W_7,Connecticut,W02
 Bracket_02,S16_W_0,Ohio St,W08
-Bracket_02,S16_W_1,Kansas,W04
-Bracket_02,S16_W_2,South Florida,W11
-Bracket_02,S16_W_3,Furman,W15
-Bracket_02,E8_W_0,Kansas,W04
-Bracket_02,E8_W_1,South Florida,W11
-Bracket_02,RegFinal_W,South Florida,W11
-Bracket_02,FF_X16,Prairie View,X16b
+Bracket_02,S16_W_1,St John's,W05
+Bracket_02,S16_W_2,Michigan St,W03
+Bracket_02,S16_W_3,Connecticut,W02
+Bracket_02,E8_W_0,Ohio St,W08
+Bracket_02,E8_W_1,Connecticut,W02
+Bracket_02,RegFinal_W,Ohio St,W08
+Bracket_02,FF_X16,Lehigh,X16a
 Bracket_02,R32_X_0,Florida,X01
 Bracket_02,R32_X_1,Clemson,X08
-Bracket_02,R32_X_2,Vanderbilt,X05
+Bracket_02,R32_X_2,McNeese St,X12
 Bracket_02,R32_X_3,Troy,X13
-Bracket_02,R32_X_4,North Carolina,X06
+Bracket_02,R32_X_4,VCU,X11
 Bracket_02,R32_X_5,Illinois,X03
-Bracket_02,R32_X_6,St Mary's CA,X07
-Bracket_02,R32_X_7,Houston,X02
-Bracket_02,S16_X_0,Clemson,X08
-Bracket_02,S16_X_1,Vanderbilt,X05
-Bracket_02,S16_X_2,Illinois,X03
-Bracket_02,S16_X_3,Houston,X02
-Bracket_02,E8_X_0,Vanderbilt,X05
-Bracket_02,E8_X_1,Illinois,X03
-Bracket_02,RegFinal_X,Vanderbilt,X05
+Bracket_02,R32_X_6,Texas A&M,X10
+Bracket_02,R32_X_7,Idaho,X15
+Bracket_02,S16_X_0,Florida,X01
+Bracket_02,S16_X_1,Troy,X13
+Bracket_02,S16_X_2,VCU,X11
+Bracket_02,S16_X_3,Texas A&M,X10
+Bracket_02,E8_X_0,Troy,X13
+Bracket_02,E8_X_1,VCU,X11
+Bracket_02,RegFinal_X,VCU,X11
 Bracket_02,FF_Y11,SMU,Y11b
-Bracket_02,R32_Y_0,Howard,Y16
+Bracket_02,R32_Y_0,Michigan,Y01
 Bracket_02,R32_Y_1,Georgia,Y08
 Bracket_02,R32_Y_2,Texas Tech,Y05
-Bracket_02,R32_Y_3,Hofstra,Y13
-Bracket_02,R32_Y_4,SMU,Y11b
+Bracket_02,R32_Y_3,Alabama,Y04
+Bracket_02,R32_Y_4,Tennessee,Y06
 Bracket_02,R32_Y_5,Virginia,Y03
 Bracket_02,R32_Y_6,Kentucky,Y07
-Bracket_02,R32_Y_7,Tennessee St,Y15
-Bracket_02,S16_Y_0,Georgia,Y08
-Bracket_02,S16_Y_1,Texas Tech,Y05
-Bracket_02,S16_Y_2,SMU,Y11b
-Bracket_02,S16_Y_3,Kentucky,Y07
-Bracket_02,E8_Y_0,Georgia,Y08
-Bracket_02,E8_Y_1,Kentucky,Y07
-Bracket_02,RegFinal_Y,Kentucky,Y07
-Bracket_02,R32_Z_0,LIU Brooklyn,Z16
+Bracket_02,R32_Y_7,Iowa St,Y02
+Bracket_02,S16_Y_0,Michigan,Y01
+Bracket_02,S16_Y_1,Alabama,Y04
+Bracket_02,S16_Y_2,Tennessee,Y06
+Bracket_02,S16_Y_3,Iowa St,Y02
+Bracket_02,E8_Y_0,Alabama,Y04
+Bracket_02,E8_Y_1,Iowa St,Y02
+Bracket_02,RegFinal_Y,Iowa St,Y02
+Bracket_02,R32_Z_0,Arizona,Z01
 Bracket_02,R32_Z_1,Utah St,Z09
 Bracket_02,R32_Z_2,Wisconsin,Z05
 Bracket_02,R32_Z_3,Arkansas,Z04
-Bracket_02,R32_Z_4,Texas,Z11
+Bracket_02,R32_Z_4,BYU,Z06
 Bracket_02,R32_Z_5,Kennesaw,Z14
-Bracket_02,R32_Z_6,Miami FL,Z07
-Bracket_02,R32_Z_7,Purdue,Z02
-Bracket_02,S16_Z_0,Utah St,Z09
+Bracket_02,R32_Z_6,Missouri,Z10
+Bracket_02,R32_Z_7,Queens NC,Z15
+Bracket_02,S16_Z_0,Arizona,Z01
 Bracket_02,S16_Z_1,Arkansas,Z04
-Bracket_02,S16_Z_2,Texas,Z11
-Bracket_02,S16_Z_3,Purdue,Z02
+Bracket_02,S16_Z_2,BYU,Z06
+Bracket_02,S16_Z_3,Missouri,Z10
 Bracket_02,E8_Z_0,Arkansas,Z04
-Bracket_02,E8_Z_1,Purdue,Z02
+Bracket_02,E8_Z_1,BYU,Z06
 Bracket_02,RegFinal_Z,Arkansas,Z04
-Bracket_02,F4_WX,South Florida,W11
+Bracket_02,F4_WX,Ohio St,W08
 Bracket_02,F4_YZ,Arkansas,Z04
 Bracket_02,NCG,Arkansas,Z04
 Bracket_02,Champion,Arkansas,Z04
@@ -136,40 +136,40 @@ Bracket_03,R32_W_1,Ohio St,W08
 Bracket_03,R32_W_2,St John's,W05
 Bracket_03,R32_W_3,Kansas,W04
 Bracket_03,R32_W_4,Louisville,W06
-Bracket_03,R32_W_5,N Dakota St,W14
+Bracket_03,R32_W_5,Michigan St,W03
 Bracket_03,R32_W_6,UCLA,W07
 Bracket_03,R32_W_7,Connecticut,W02
 Bracket_03,S16_W_0,Ohio St,W08
-Bracket_03,S16_W_1,Kansas,W04
-Bracket_03,S16_W_2,Louisville,W06
+Bracket_03,S16_W_1,St John's,W05
+Bracket_03,S16_W_2,Michigan St,W03
 Bracket_03,S16_W_3,Connecticut,W02
-Bracket_03,E8_W_0,Kansas,W04
-Bracket_03,E8_W_1,Louisville,W06
-Bracket_03,RegFinal_W,Kansas,W04
+Bracket_03,E8_W_0,St John's,W05
+Bracket_03,E8_W_1,Michigan St,W03
+Bracket_03,RegFinal_W,Michigan St,W03
 Bracket_03,FF_X16,Lehigh,X16a
-Bracket_03,R32_X_0,Florida,X01
-Bracket_03,R32_X_1,Iowa,X09
-Bracket_03,R32_X_2,Vanderbilt,X05
-Bracket_03,R32_X_3,Troy,X13
-Bracket_03,R32_X_4,North Carolina,X06
+Bracket_03,R32_X_0,Lehigh,X16a
+Bracket_03,R32_X_1,Clemson,X08
+Bracket_03,R32_X_2,McNeese St,X12
+Bracket_03,R32_X_3,Nebraska,X04
+Bracket_03,R32_X_4,VCU,X11
 Bracket_03,R32_X_5,Illinois,X03
-Bracket_03,R32_X_6,St Mary's CA,X07
+Bracket_03,R32_X_6,Texas A&M,X10
 Bracket_03,R32_X_7,Houston,X02
-Bracket_03,S16_X_0,Florida,X01
-Bracket_03,S16_X_1,Vanderbilt,X05
-Bracket_03,S16_X_2,North Carolina,X06
-Bracket_03,S16_X_3,St Mary's CA,X07
-Bracket_03,E8_X_0,Florida,X01
-Bracket_03,E8_X_1,St Mary's CA,X07
-Bracket_03,RegFinal_X,Florida,X01
-Bracket_03,FF_Y11,Miami OH,Y11a
+Bracket_03,S16_X_0,Clemson,X08
+Bracket_03,S16_X_1,Nebraska,X04
+Bracket_03,S16_X_2,Illinois,X03
+Bracket_03,S16_X_3,Houston,X02
+Bracket_03,E8_X_0,Nebraska,X04
+Bracket_03,E8_X_1,Illinois,X03
+Bracket_03,RegFinal_X,Nebraska,X04
+Bracket_03,FF_Y11,SMU,Y11b
 Bracket_03,R32_Y_0,Michigan,Y01
 Bracket_03,R32_Y_1,Georgia,Y08
 Bracket_03,R32_Y_2,Texas Tech,Y05
 Bracket_03,R32_Y_3,Alabama,Y04
-Bracket_03,R32_Y_4,Miami OH,Y11a
+Bracket_03,R32_Y_4,SMU,Y11b
 Bracket_03,R32_Y_5,Virginia,Y03
-Bracket_03,R32_Y_6,Kentucky,Y07
+Bracket_03,R32_Y_6,Santa Clara,Y10
 Bracket_03,R32_Y_7,Iowa St,Y02
 Bracket_03,S16_Y_0,Georgia,Y08
 Bracket_03,S16_Y_1,Alabama,Y04
@@ -177,124 +177,124 @@ Bracket_03,S16_Y_2,Virginia,Y03
 Bracket_03,S16_Y_3,Iowa St,Y02
 Bracket_03,E8_Y_0,Alabama,Y04
 Bracket_03,E8_Y_1,Virginia,Y03
-Bracket_03,RegFinal_Y,Virginia,Y03
+Bracket_03,RegFinal_Y,Alabama,Y04
 Bracket_03,R32_Z_0,LIU Brooklyn,Z16
-Bracket_03,R32_Z_1,Villanova,Z08
+Bracket_03,R32_Z_1,Utah St,Z09
 Bracket_03,R32_Z_2,Wisconsin,Z05
-Bracket_03,R32_Z_3,Hawaii,Z13
+Bracket_03,R32_Z_3,Arkansas,Z04
 Bracket_03,R32_Z_4,Texas,Z11
 Bracket_03,R32_Z_5,Gonzaga,Z03
-Bracket_03,R32_Z_6,Missouri,Z10
+Bracket_03,R32_Z_6,Miami FL,Z07
 Bracket_03,R32_Z_7,Purdue,Z02
-Bracket_03,S16_Z_0,Villanova,Z08
+Bracket_03,S16_Z_0,Utah St,Z09
 Bracket_03,S16_Z_1,Wisconsin,Z05
 Bracket_03,S16_Z_2,Texas,Z11
 Bracket_03,S16_Z_3,Purdue,Z02
 Bracket_03,E8_Z_0,Wisconsin,Z05
 Bracket_03,E8_Z_1,Purdue,Z02
 Bracket_03,RegFinal_Z,Purdue,Z02
-Bracket_03,F4_WX,Florida,X01
+Bracket_03,F4_WX,Michigan St,W03
 Bracket_03,F4_YZ,Purdue,Z02
-Bracket_03,NCG,Florida,X01
-Bracket_03,Champion,Florida,X01
+Bracket_03,NCG,Purdue,Z02
+Bracket_03,Champion,Purdue,Z02
 Bracket_04,R32_W_0,Duke,W01
-Bracket_04,R32_W_1,TCU,W09
-Bracket_04,R32_W_2,St John's,W05
+Bracket_04,R32_W_1,Ohio St,W08
+Bracket_04,R32_W_2,Northern Iowa,W12
 Bracket_04,R32_W_3,Kansas,W04
 Bracket_04,R32_W_4,Louisville,W06
 Bracket_04,R32_W_5,Michigan St,W03
 Bracket_04,R32_W_6,UCLA,W07
 Bracket_04,R32_W_7,Connecticut,W02
-Bracket_04,S16_W_0,Duke,W01
+Bracket_04,S16_W_0,Ohio St,W08
 Bracket_04,S16_W_1,Kansas,W04
-Bracket_04,S16_W_2,Louisville,W06
+Bracket_04,S16_W_2,Michigan St,W03
 Bracket_04,S16_W_3,Connecticut,W02
-Bracket_04,E8_W_0,Duke,W01
-Bracket_04,E8_W_1,Connecticut,W02
-Bracket_04,RegFinal_W,Connecticut,W02
-Bracket_04,FF_X16,Prairie View,X16b
-Bracket_04,R32_X_0,Prairie View,X16b
+Bracket_04,E8_W_0,Kansas,W04
+Bracket_04,E8_W_1,Michigan St,W03
+Bracket_04,RegFinal_W,Kansas,W04
+Bracket_04,FF_X16,Lehigh,X16a
+Bracket_04,R32_X_0,Florida,X01
 Bracket_04,R32_X_1,Clemson,X08
 Bracket_04,R32_X_2,Vanderbilt,X05
-Bracket_04,R32_X_3,Nebraska,X04
-Bracket_04,R32_X_4,VCU,X11
+Bracket_04,R32_X_3,Troy,X13
+Bracket_04,R32_X_4,North Carolina,X06
 Bracket_04,R32_X_5,Illinois,X03
-Bracket_04,R32_X_6,St Mary's CA,X07
+Bracket_04,R32_X_6,Texas A&M,X10
 Bracket_04,R32_X_7,Idaho,X15
-Bracket_04,S16_X_0,Clemson,X08
-Bracket_04,S16_X_1,Nebraska,X04
-Bracket_04,S16_X_2,VCU,X11
-Bracket_04,S16_X_3,St Mary's CA,X07
-Bracket_04,E8_X_0,Nebraska,X04
-Bracket_04,E8_X_1,VCU,X11
-Bracket_04,RegFinal_X,Nebraska,X04
+Bracket_04,S16_X_0,Florida,X01
+Bracket_04,S16_X_1,Troy,X13
+Bracket_04,S16_X_2,Illinois,X03
+Bracket_04,S16_X_3,Texas A&M,X10
+Bracket_04,E8_X_0,Troy,X13
+Bracket_04,E8_X_1,Illinois,X03
+Bracket_04,RegFinal_X,Illinois,X03
 Bracket_04,FF_Y11,Miami OH,Y11a
 Bracket_04,R32_Y_0,Michigan,Y01
 Bracket_04,R32_Y_1,Georgia,Y08
-Bracket_04,R32_Y_2,Akron,Y12
+Bracket_04,R32_Y_2,Texas Tech,Y05
 Bracket_04,R32_Y_3,Alabama,Y04
-Bracket_04,R32_Y_4,Tennessee,Y06
+Bracket_04,R32_Y_4,Miami OH,Y11a
 Bracket_04,R32_Y_5,Virginia,Y03
 Bracket_04,R32_Y_6,Santa Clara,Y10
 Bracket_04,R32_Y_7,Iowa St,Y02
-Bracket_04,S16_Y_0,Michigan,Y01
-Bracket_04,S16_Y_1,Alabama,Y04
+Bracket_04,S16_Y_0,Georgia,Y08
+Bracket_04,S16_Y_1,Texas Tech,Y05
 Bracket_04,S16_Y_2,Virginia,Y03
 Bracket_04,S16_Y_3,Iowa St,Y02
-Bracket_04,E8_Y_0,Alabama,Y04
-Bracket_04,E8_Y_1,Virginia,Y03
-Bracket_04,RegFinal_Y,Alabama,Y04
+Bracket_04,E8_Y_0,Texas Tech,Y05
+Bracket_04,E8_Y_1,Iowa St,Y02
+Bracket_04,RegFinal_Y,Texas Tech,Y05
 Bracket_04,R32_Z_0,Arizona,Z01
 Bracket_04,R32_Z_1,Villanova,Z08
-Bracket_04,R32_Z_2,Wisconsin,Z05
-Bracket_04,R32_Z_3,Arkansas,Z04
-Bracket_04,R32_Z_4,Texas,Z11
+Bracket_04,R32_Z_2,High Point,Z12
+Bracket_04,R32_Z_3,Hawaii,Z13
+Bracket_04,R32_Z_4,BYU,Z06
 Bracket_04,R32_Z_5,Gonzaga,Z03
 Bracket_04,R32_Z_6,Miami FL,Z07
-Bracket_04,R32_Z_7,Purdue,Z02
+Bracket_04,R32_Z_7,Queens NC,Z15
 Bracket_04,S16_Z_0,Arizona,Z01
-Bracket_04,S16_Z_1,Arkansas,Z04
+Bracket_04,S16_Z_1,Hawaii,Z13
 Bracket_04,S16_Z_2,Gonzaga,Z03
-Bracket_04,S16_Z_3,Purdue,Z02
+Bracket_04,S16_Z_3,Miami FL,Z07
 Bracket_04,E8_Z_0,Arizona,Z01
 Bracket_04,E8_Z_1,Gonzaga,Z03
 Bracket_04,RegFinal_Z,Arizona,Z01
-Bracket_04,F4_WX,Connecticut,W02
+Bracket_04,F4_WX,Kansas,W04
 Bracket_04,F4_YZ,Arizona,Z01
 Bracket_04,NCG,Arizona,Z01
 Bracket_04,Champion,Arizona,Z01
 Bracket_05,R32_W_0,Duke,W01
 Bracket_05,R32_W_1,Ohio St,W08
 Bracket_05,R32_W_2,St John's,W05
-Bracket_05,R32_W_3,Cal Baptist,W13
-Bracket_05,R32_W_4,South Florida,W11
+Bracket_05,R32_W_3,Kansas,W04
+Bracket_05,R32_W_4,Louisville,W06
 Bracket_05,R32_W_5,Michigan St,W03
 Bracket_05,R32_W_6,UCLA,W07
 Bracket_05,R32_W_7,Connecticut,W02
-Bracket_05,S16_W_0,Duke,W01
+Bracket_05,S16_W_0,Ohio St,W08
 Bracket_05,S16_W_1,St John's,W05
-Bracket_05,S16_W_2,Michigan St,W03
-Bracket_05,S16_W_3,Connecticut,W02
-Bracket_05,E8_W_0,Duke,W01
-Bracket_05,E8_W_1,Connecticut,W02
-Bracket_05,RegFinal_W,Connecticut,W02
-Bracket_05,FF_X16,Prairie View,X16b
+Bracket_05,S16_W_2,Louisville,W06
+Bracket_05,S16_W_3,UCLA,W07
+Bracket_05,E8_W_0,St John's,W05
+Bracket_05,E8_W_1,UCLA,W07
+Bracket_05,RegFinal_W,UCLA,W07
+Bracket_05,FF_X16,Lehigh,X16a
 Bracket_05,R32_X_0,Florida,X01
-Bracket_05,R32_X_1,Iowa,X09
+Bracket_05,R32_X_1,Clemson,X08
 Bracket_05,R32_X_2,Vanderbilt,X05
-Bracket_05,R32_X_3,Nebraska,X04
+Bracket_05,R32_X_3,Troy,X13
 Bracket_05,R32_X_4,VCU,X11
 Bracket_05,R32_X_5,Illinois,X03
-Bracket_05,R32_X_6,Texas A&M,X10
+Bracket_05,R32_X_6,St Mary's CA,X07
 Bracket_05,R32_X_7,Houston,X02
-Bracket_05,S16_X_0,Iowa,X09
+Bracket_05,S16_X_0,Florida,X01
 Bracket_05,S16_X_1,Vanderbilt,X05
-Bracket_05,S16_X_2,Illinois,X03
+Bracket_05,S16_X_2,VCU,X11
 Bracket_05,S16_X_3,Houston,X02
-Bracket_05,E8_X_0,Vanderbilt,X05
+Bracket_05,E8_X_0,Florida,X01
 Bracket_05,E8_X_1,Houston,X02
 Bracket_05,RegFinal_X,Houston,X02
-Bracket_05,FF_Y11,SMU,Y11b
+Bracket_05,FF_Y11,Miami OH,Y11a
 Bracket_05,R32_Y_0,Michigan,Y01
 Bracket_05,R32_Y_1,Georgia,Y08
 Bracket_05,R32_Y_2,Texas Tech,Y05
@@ -303,190 +303,190 @@ Bracket_05,R32_Y_4,Tennessee,Y06
 Bracket_05,R32_Y_5,Wright St,Y14
 Bracket_05,R32_Y_6,Santa Clara,Y10
 Bracket_05,R32_Y_7,Iowa St,Y02
-Bracket_05,S16_Y_0,Georgia,Y08
-Bracket_05,S16_Y_1,Alabama,Y04
+Bracket_05,S16_Y_0,Michigan,Y01
+Bracket_05,S16_Y_1,Texas Tech,Y05
 Bracket_05,S16_Y_2,Tennessee,Y06
-Bracket_05,S16_Y_3,Santa Clara,Y10
-Bracket_05,E8_Y_0,Georgia,Y08
-Bracket_05,E8_Y_1,Tennessee,Y06
-Bracket_05,RegFinal_Y,Tennessee,Y06
-Bracket_05,R32_Z_0,Arizona,Z01
-Bracket_05,R32_Z_1,Villanova,Z08
-Bracket_05,R32_Z_2,High Point,Z12
+Bracket_05,S16_Y_3,Iowa St,Y02
+Bracket_05,E8_Y_0,Michigan,Y01
+Bracket_05,E8_Y_1,Iowa St,Y02
+Bracket_05,RegFinal_Y,Michigan,Y01
+Bracket_05,R32_Z_0,LIU Brooklyn,Z16
+Bracket_05,R32_Z_1,Utah St,Z09
+Bracket_05,R32_Z_2,Wisconsin,Z05
 Bracket_05,R32_Z_3,Arkansas,Z04
 Bracket_05,R32_Z_4,BYU,Z06
 Bracket_05,R32_Z_5,Gonzaga,Z03
 Bracket_05,R32_Z_6,Miami FL,Z07
 Bracket_05,R32_Z_7,Purdue,Z02
-Bracket_05,S16_Z_0,Arizona,Z01
-Bracket_05,S16_Z_1,Arkansas,Z04
+Bracket_05,S16_Z_0,Utah St,Z09
+Bracket_05,S16_Z_1,Wisconsin,Z05
 Bracket_05,S16_Z_2,BYU,Z06
 Bracket_05,S16_Z_3,Purdue,Z02
-Bracket_05,E8_Z_0,Arkansas,Z04
-Bracket_05,E8_Z_1,Purdue,Z02
-Bracket_05,RegFinal_Z,Arkansas,Z04
+Bracket_05,E8_Z_0,Wisconsin,Z05
+Bracket_05,E8_Z_1,BYU,Z06
+Bracket_05,RegFinal_Z,Wisconsin,Z05
 Bracket_05,F4_WX,Houston,X02
-Bracket_05,F4_YZ,Arkansas,Z04
-Bracket_05,NCG,Houston,X02
-Bracket_05,Champion,Houston,X02
-Bracket_06,R32_W_0,Siena,W16
-Bracket_06,R32_W_1,Ohio St,W08
+Bracket_05,F4_YZ,Michigan,Y01
+Bracket_05,NCG,Michigan,Y01
+Bracket_05,Champion,Michigan,Y01
+Bracket_06,R32_W_0,Duke,W01
+Bracket_06,R32_W_1,TCU,W09
 Bracket_06,R32_W_2,St John's,W05
 Bracket_06,R32_W_3,Kansas,W04
-Bracket_06,R32_W_4,Louisville,W06
+Bracket_06,R32_W_4,South Florida,W11
 Bracket_06,R32_W_5,Michigan St,W03
 Bracket_06,R32_W_6,UCLA,W07
 Bracket_06,R32_W_7,Connecticut,W02
-Bracket_06,S16_W_0,Ohio St,W08
-Bracket_06,S16_W_1,St John's,W05
+Bracket_06,S16_W_0,Duke,W01
+Bracket_06,S16_W_1,Kansas,W04
 Bracket_06,S16_W_2,Michigan St,W03
 Bracket_06,S16_W_3,Connecticut,W02
-Bracket_06,E8_W_0,St John's,W05
-Bracket_06,E8_W_1,Michigan St,W03
-Bracket_06,RegFinal_W,St John's,W05
+Bracket_06,E8_W_0,Duke,W01
+Bracket_06,E8_W_1,Connecticut,W02
+Bracket_06,RegFinal_W,Connecticut,W02
 Bracket_06,FF_X16,Lehigh,X16a
 Bracket_06,R32_X_0,Florida,X01
 Bracket_06,R32_X_1,Clemson,X08
 Bracket_06,R32_X_2,Vanderbilt,X05
-Bracket_06,R32_X_3,Troy,X13
+Bracket_06,R32_X_3,Nebraska,X04
 Bracket_06,R32_X_4,VCU,X11
 Bracket_06,R32_X_5,Illinois,X03
-Bracket_06,R32_X_6,Texas A&M,X10
+Bracket_06,R32_X_6,St Mary's CA,X07
 Bracket_06,R32_X_7,Idaho,X15
-Bracket_06,S16_X_0,Clemson,X08
+Bracket_06,S16_X_0,Florida,X01
 Bracket_06,S16_X_1,Vanderbilt,X05
-Bracket_06,S16_X_2,VCU,X11
-Bracket_06,S16_X_3,Idaho,X15
-Bracket_06,E8_X_0,Vanderbilt,X05
-Bracket_06,E8_X_1,Idaho,X15
-Bracket_06,RegFinal_X,Vanderbilt,X05
+Bracket_06,S16_X_2,Illinois,X03
+Bracket_06,S16_X_3,St Mary's CA,X07
+Bracket_06,E8_X_0,Florida,X01
+Bracket_06,E8_X_1,Illinois,X03
+Bracket_06,RegFinal_X,Florida,X01
 Bracket_06,FF_Y11,SMU,Y11b
 Bracket_06,R32_Y_0,Michigan,Y01
-Bracket_06,R32_Y_1,St Louis,Y09
+Bracket_06,R32_Y_1,Georgia,Y08
 Bracket_06,R32_Y_2,Texas Tech,Y05
 Bracket_06,R32_Y_3,Alabama,Y04
 Bracket_06,R32_Y_4,Tennessee,Y06
 Bracket_06,R32_Y_5,Virginia,Y03
-Bracket_06,R32_Y_6,Kentucky,Y07
+Bracket_06,R32_Y_6,Santa Clara,Y10
 Bracket_06,R32_Y_7,Iowa St,Y02
-Bracket_06,S16_Y_0,Michigan,Y01
+Bracket_06,S16_Y_0,Georgia,Y08
 Bracket_06,S16_Y_1,Alabama,Y04
 Bracket_06,S16_Y_2,Tennessee,Y06
 Bracket_06,S16_Y_3,Iowa St,Y02
 Bracket_06,E8_Y_0,Alabama,Y04
-Bracket_06,E8_Y_1,Iowa St,Y02
+Bracket_06,E8_Y_1,Tennessee,Y06
 Bracket_06,RegFinal_Y,Alabama,Y04
 Bracket_06,R32_Z_0,Arizona,Z01
-Bracket_06,R32_Z_1,Villanova,Z08
-Bracket_06,R32_Z_2,Wisconsin,Z05
+Bracket_06,R32_Z_1,Utah St,Z09
+Bracket_06,R32_Z_2,High Point,Z12
 Bracket_06,R32_Z_3,Arkansas,Z04
 Bracket_06,R32_Z_4,BYU,Z06
-Bracket_06,R32_Z_5,Gonzaga,Z03
-Bracket_06,R32_Z_6,Missouri,Z10
+Bracket_06,R32_Z_5,Kennesaw,Z14
+Bracket_06,R32_Z_6,Miami FL,Z07
 Bracket_06,R32_Z_7,Purdue,Z02
 Bracket_06,S16_Z_0,Arizona,Z01
-Bracket_06,S16_Z_1,Wisconsin,Z05
-Bracket_06,S16_Z_2,Gonzaga,Z03
+Bracket_06,S16_Z_1,Arkansas,Z04
+Bracket_06,S16_Z_2,BYU,Z06
 Bracket_06,S16_Z_3,Purdue,Z02
 Bracket_06,E8_Z_0,Arizona,Z01
 Bracket_06,E8_Z_1,Purdue,Z02
 Bracket_06,RegFinal_Z,Arizona,Z01
-Bracket_06,F4_WX,St John's,W05
+Bracket_06,F4_WX,Florida,X01
 Bracket_06,F4_YZ,Alabama,Y04
-Bracket_06,NCG,Alabama,Y04
-Bracket_06,Champion,Alabama,Y04
-Bracket_07,R32_W_0,Siena,W16
+Bracket_06,NCG,Florida,X01
+Bracket_06,Champion,Florida,X01
+Bracket_07,R32_W_0,Duke,W01
 Bracket_07,R32_W_1,Ohio St,W08
-Bracket_07,R32_W_2,Northern Iowa,W12
-Bracket_07,R32_W_3,Cal Baptist,W13
-Bracket_07,R32_W_4,South Florida,W11
-Bracket_07,R32_W_5,N Dakota St,W14
-Bracket_07,R32_W_6,UCF,W10
+Bracket_07,R32_W_2,St John's,W05
+Bracket_07,R32_W_3,Kansas,W04
+Bracket_07,R32_W_4,Louisville,W06
+Bracket_07,R32_W_5,Michigan St,W03
+Bracket_07,R32_W_6,UCLA,W07
 Bracket_07,R32_W_7,Connecticut,W02
-Bracket_07,S16_W_0,Ohio St,W08
-Bracket_07,S16_W_1,Cal Baptist,W13
-Bracket_07,S16_W_2,South Florida,W11
-Bracket_07,S16_W_3,UCF,W10
-Bracket_07,E8_W_0,Ohio St,W08
-Bracket_07,E8_W_1,UCF,W10
-Bracket_07,RegFinal_W,Ohio St,W08
+Bracket_07,S16_W_0,Duke,W01
+Bracket_07,S16_W_1,Kansas,W04
+Bracket_07,S16_W_2,Michigan St,W03
+Bracket_07,S16_W_3,Connecticut,W02
+Bracket_07,E8_W_0,Duke,W01
+Bracket_07,E8_W_1,Connecticut,W02
+Bracket_07,RegFinal_W,Duke,W01
 Bracket_07,FF_X16,Lehigh,X16a
 Bracket_07,R32_X_0,Florida,X01
-Bracket_07,R32_X_1,Clemson,X08
-Bracket_07,R32_X_2,Vanderbilt,X05
+Bracket_07,R32_X_1,Iowa,X09
+Bracket_07,R32_X_2,McNeese St,X12
 Bracket_07,R32_X_3,Nebraska,X04
 Bracket_07,R32_X_4,VCU,X11
-Bracket_07,R32_X_5,Illinois,X03
+Bracket_07,R32_X_5,Penn,X14
 Bracket_07,R32_X_6,St Mary's CA,X07
 Bracket_07,R32_X_7,Houston,X02
-Bracket_07,S16_X_0,Florida,X01
-Bracket_07,S16_X_1,Vanderbilt,X05
-Bracket_07,S16_X_2,Illinois,X03
+Bracket_07,S16_X_0,Iowa,X09
+Bracket_07,S16_X_1,Nebraska,X04
+Bracket_07,S16_X_2,VCU,X11
 Bracket_07,S16_X_3,Houston,X02
-Bracket_07,E8_X_0,Florida,X01
-Bracket_07,E8_X_1,Houston,X02
-Bracket_07,RegFinal_X,Houston,X02
-Bracket_07,FF_Y11,Miami OH,Y11a
+Bracket_07,E8_X_0,Nebraska,X04
+Bracket_07,E8_X_1,VCU,X11
+Bracket_07,RegFinal_X,Nebraska,X04
+Bracket_07,FF_Y11,SMU,Y11b
 Bracket_07,R32_Y_0,Michigan,Y01
 Bracket_07,R32_Y_1,Georgia,Y08
-Bracket_07,R32_Y_2,Akron,Y12
-Bracket_07,R32_Y_3,Hofstra,Y13
+Bracket_07,R32_Y_2,Texas Tech,Y05
+Bracket_07,R32_Y_3,Alabama,Y04
 Bracket_07,R32_Y_4,Tennessee,Y06
-Bracket_07,R32_Y_5,Wright St,Y14
-Bracket_07,R32_Y_6,Kentucky,Y07
+Bracket_07,R32_Y_5,Virginia,Y03
+Bracket_07,R32_Y_6,Santa Clara,Y10
 Bracket_07,R32_Y_7,Iowa St,Y02
 Bracket_07,S16_Y_0,Michigan,Y01
-Bracket_07,S16_Y_1,Akron,Y12
-Bracket_07,S16_Y_2,Tennessee,Y06
+Bracket_07,S16_Y_1,Alabama,Y04
+Bracket_07,S16_Y_2,Virginia,Y03
 Bracket_07,S16_Y_3,Iowa St,Y02
-Bracket_07,E8_Y_0,Michigan,Y01
-Bracket_07,E8_Y_1,Iowa St,Y02
-Bracket_07,RegFinal_Y,Michigan,Y01
-Bracket_07,R32_Z_0,Arizona,Z01
-Bracket_07,R32_Z_1,Villanova,Z08
-Bracket_07,R32_Z_2,Wisconsin,Z05
+Bracket_07,E8_Y_0,Alabama,Y04
+Bracket_07,E8_Y_1,Virginia,Y03
+Bracket_07,RegFinal_Y,Virginia,Y03
+Bracket_07,R32_Z_0,LIU Brooklyn,Z16
+Bracket_07,R32_Z_1,Utah St,Z09
+Bracket_07,R32_Z_2,High Point,Z12
 Bracket_07,R32_Z_3,Hawaii,Z13
-Bracket_07,R32_Z_4,Texas,Z11
+Bracket_07,R32_Z_4,BYU,Z06
 Bracket_07,R32_Z_5,Gonzaga,Z03
 Bracket_07,R32_Z_6,Miami FL,Z07
-Bracket_07,R32_Z_7,Purdue,Z02
-Bracket_07,S16_Z_0,Villanova,Z08
-Bracket_07,S16_Z_1,Hawaii,Z13
-Bracket_07,S16_Z_2,Gonzaga,Z03
-Bracket_07,S16_Z_3,Purdue,Z02
-Bracket_07,E8_Z_0,Villanova,Z08
-Bracket_07,E8_Z_1,Purdue,Z02
-Bracket_07,RegFinal_Z,Purdue,Z02
-Bracket_07,F4_WX,Houston,X02
-Bracket_07,F4_YZ,Michigan,Y01
-Bracket_07,NCG,Michigan,Y01
-Bracket_07,Champion,Michigan,Y01
+Bracket_07,R32_Z_7,Queens NC,Z15
+Bracket_07,S16_Z_0,Utah St,Z09
+Bracket_07,S16_Z_1,High Point,Z12
+Bracket_07,S16_Z_2,BYU,Z06
+Bracket_07,S16_Z_3,Queens NC,Z15
+Bracket_07,E8_Z_0,Utah St,Z09
+Bracket_07,E8_Z_1,Queens NC,Z15
+Bracket_07,RegFinal_Z,Utah St,Z09
+Bracket_07,F4_WX,Nebraska,X04
+Bracket_07,F4_YZ,Virginia,Y03
+Bracket_07,NCG,Virginia,Y03
+Bracket_07,Champion,Virginia,Y03
 Bracket_08,R32_W_0,Duke,W01
 Bracket_08,R32_W_1,Ohio St,W08
-Bracket_08,R32_W_2,Northern Iowa,W12
+Bracket_08,R32_W_2,St John's,W05
 Bracket_08,R32_W_3,Kansas,W04
-Bracket_08,R32_W_4,Louisville,W06
-Bracket_08,R32_W_5,Michigan St,W03
+Bracket_08,R32_W_4,South Florida,W11
+Bracket_08,R32_W_5,N Dakota St,W14
 Bracket_08,R32_W_6,UCLA,W07
 Bracket_08,R32_W_7,Connecticut,W02
-Bracket_08,S16_W_0,Duke,W01
+Bracket_08,S16_W_0,Ohio St,W08
 Bracket_08,S16_W_1,Kansas,W04
-Bracket_08,S16_W_2,Michigan St,W03
+Bracket_08,S16_W_2,South Florida,W11
 Bracket_08,S16_W_3,Connecticut,W02
-Bracket_08,E8_W_0,Duke,W01
-Bracket_08,E8_W_1,Michigan St,W03
-Bracket_08,RegFinal_W,Duke,W01
-Bracket_08,FF_X16,Prairie View,X16b
+Bracket_08,E8_W_0,Kansas,W04
+Bracket_08,E8_W_1,Connecticut,W02
+Bracket_08,RegFinal_W,Connecticut,W02
+Bracket_08,FF_X16,Lehigh,X16a
 Bracket_08,R32_X_0,Florida,X01
-Bracket_08,R32_X_1,Clemson,X08
-Bracket_08,R32_X_2,Vanderbilt,X05
+Bracket_08,R32_X_1,Iowa,X09
+Bracket_08,R32_X_2,McNeese St,X12
 Bracket_08,R32_X_3,Troy,X13
 Bracket_08,R32_X_4,VCU,X11
 Bracket_08,R32_X_5,Illinois,X03
 Bracket_08,R32_X_6,St Mary's CA,X07
 Bracket_08,R32_X_7,Houston,X02
 Bracket_08,S16_X_0,Florida,X01
-Bracket_08,S16_X_1,Vanderbilt,X05
+Bracket_08,S16_X_1,McNeese St,X12
 Bracket_08,S16_X_2,VCU,X11
 Bracket_08,S16_X_3,Houston,X02
 Bracket_08,E8_X_0,Florida,X01
@@ -499,57 +499,57 @@ Bracket_08,R32_Y_2,Texas Tech,Y05
 Bracket_08,R32_Y_3,Alabama,Y04
 Bracket_08,R32_Y_4,Tennessee,Y06
 Bracket_08,R32_Y_5,Virginia,Y03
-Bracket_08,R32_Y_6,Santa Clara,Y10
+Bracket_08,R32_Y_6,Kentucky,Y07
 Bracket_08,R32_Y_7,Iowa St,Y02
 Bracket_08,S16_Y_0,Georgia,Y08
 Bracket_08,S16_Y_1,Alabama,Y04
 Bracket_08,S16_Y_2,Virginia,Y03
 Bracket_08,S16_Y_3,Iowa St,Y02
 Bracket_08,E8_Y_0,Alabama,Y04
-Bracket_08,E8_Y_1,Iowa St,Y02
-Bracket_08,RegFinal_Y,Iowa St,Y02
-Bracket_08,R32_Z_0,LIU Brooklyn,Z16
+Bracket_08,E8_Y_1,Virginia,Y03
+Bracket_08,RegFinal_Y,Alabama,Y04
+Bracket_08,R32_Z_0,Arizona,Z01
 Bracket_08,R32_Z_1,Utah St,Z09
-Bracket_08,R32_Z_2,High Point,Z12
-Bracket_08,R32_Z_3,Hawaii,Z13
-Bracket_08,R32_Z_4,Texas,Z11
+Bracket_08,R32_Z_2,Wisconsin,Z05
+Bracket_08,R32_Z_3,Arkansas,Z04
+Bracket_08,R32_Z_4,BYU,Z06
 Bracket_08,R32_Z_5,Gonzaga,Z03
-Bracket_08,R32_Z_6,Miami FL,Z07
-Bracket_08,R32_Z_7,Purdue,Z02
-Bracket_08,S16_Z_0,Utah St,Z09
-Bracket_08,S16_Z_1,Hawaii,Z13
+Bracket_08,R32_Z_6,Missouri,Z10
+Bracket_08,R32_Z_7,Queens NC,Z15
+Bracket_08,S16_Z_0,Arizona,Z01
+Bracket_08,S16_Z_1,Arkansas,Z04
 Bracket_08,S16_Z_2,Gonzaga,Z03
-Bracket_08,S16_Z_3,Purdue,Z02
-Bracket_08,E8_Z_0,Utah St,Z09
-Bracket_08,E8_Z_1,Purdue,Z02
-Bracket_08,RegFinal_Z,Purdue,Z02
+Bracket_08,S16_Z_3,Missouri,Z10
+Bracket_08,E8_Z_0,Arkansas,Z04
+Bracket_08,E8_Z_1,Gonzaga,Z03
+Bracket_08,RegFinal_Z,Gonzaga,Z03
 Bracket_08,F4_WX,Houston,X02
-Bracket_08,F4_YZ,Purdue,Z02
-Bracket_08,NCG,Purdue,Z02
-Bracket_08,Champion,Purdue,Z02
+Bracket_08,F4_YZ,Gonzaga,Z03
+Bracket_08,NCG,Houston,X02
+Bracket_08,Champion,Houston,X02
 Bracket_09,R32_W_0,Duke,W01
 Bracket_09,R32_W_1,Ohio St,W08
 Bracket_09,R32_W_2,St John's,W05
 Bracket_09,R32_W_3,Kansas,W04
-Bracket_09,R32_W_4,South Florida,W11
+Bracket_09,R32_W_4,Louisville,W06
 Bracket_09,R32_W_5,Michigan St,W03
 Bracket_09,R32_W_6,UCLA,W07
 Bracket_09,R32_W_7,Connecticut,W02
 Bracket_09,S16_W_0,Duke,W01
-Bracket_09,S16_W_1,Kansas,W04
+Bracket_09,S16_W_1,St John's,W05
 Bracket_09,S16_W_2,Michigan St,W03
-Bracket_09,S16_W_3,Connecticut,W02
-Bracket_09,E8_W_0,Kansas,W04
+Bracket_09,S16_W_3,UCLA,W07
+Bracket_09,E8_W_0,Duke,W01
 Bracket_09,E8_W_1,Michigan St,W03
-Bracket_09,RegFinal_W,Kansas,W04
-Bracket_09,FF_X16,Prairie View,X16b
+Bracket_09,RegFinal_W,Duke,W01
+Bracket_09,FF_X16,Lehigh,X16a
 Bracket_09,R32_X_0,Florida,X01
-Bracket_09,R32_X_1,Clemson,X08
+Bracket_09,R32_X_1,Iowa,X09
 Bracket_09,R32_X_2,Vanderbilt,X05
-Bracket_09,R32_X_3,Nebraska,X04
-Bracket_09,R32_X_4,North Carolina,X06
+Bracket_09,R32_X_3,Troy,X13
+Bracket_09,R32_X_4,VCU,X11
 Bracket_09,R32_X_5,Illinois,X03
-Bracket_09,R32_X_6,St Mary's CA,X07
+Bracket_09,R32_X_6,Texas A&M,X10
 Bracket_09,R32_X_7,Houston,X02
 Bracket_09,S16_X_0,Florida,X01
 Bracket_09,S16_X_1,Vanderbilt,X05
@@ -558,145 +558,145 @@ Bracket_09,S16_X_3,Houston,X02
 Bracket_09,E8_X_0,Florida,X01
 Bracket_09,E8_X_1,Houston,X02
 Bracket_09,RegFinal_X,Florida,X01
-Bracket_09,FF_Y11,Miami OH,Y11a
+Bracket_09,FF_Y11,SMU,Y11b
 Bracket_09,R32_Y_0,Michigan,Y01
-Bracket_09,R32_Y_1,St Louis,Y09
-Bracket_09,R32_Y_2,Akron,Y12
-Bracket_09,R32_Y_3,Alabama,Y04
-Bracket_09,R32_Y_4,Miami OH,Y11a
-Bracket_09,R32_Y_5,Wright St,Y14
+Bracket_09,R32_Y_1,Georgia,Y08
+Bracket_09,R32_Y_2,Texas Tech,Y05
+Bracket_09,R32_Y_3,Hofstra,Y13
+Bracket_09,R32_Y_4,SMU,Y11b
+Bracket_09,R32_Y_5,Virginia,Y03
 Bracket_09,R32_Y_6,Santa Clara,Y10
 Bracket_09,R32_Y_7,Iowa St,Y02
-Bracket_09,S16_Y_0,Michigan,Y01
-Bracket_09,S16_Y_1,Alabama,Y04
-Bracket_09,S16_Y_2,Miami OH,Y11a
+Bracket_09,S16_Y_0,Georgia,Y08
+Bracket_09,S16_Y_1,Texas Tech,Y05
+Bracket_09,S16_Y_2,Virginia,Y03
 Bracket_09,S16_Y_3,Iowa St,Y02
-Bracket_09,E8_Y_0,Michigan,Y01
+Bracket_09,E8_Y_0,Texas Tech,Y05
 Bracket_09,E8_Y_1,Iowa St,Y02
 Bracket_09,RegFinal_Y,Iowa St,Y02
-Bracket_09,R32_Z_0,LIU Brooklyn,Z16
+Bracket_09,R32_Z_0,Arizona,Z01
 Bracket_09,R32_Z_1,Villanova,Z08
 Bracket_09,R32_Z_2,Wisconsin,Z05
 Bracket_09,R32_Z_3,Arkansas,Z04
-Bracket_09,R32_Z_4,Texas,Z11
+Bracket_09,R32_Z_4,BYU,Z06
 Bracket_09,R32_Z_5,Gonzaga,Z03
 Bracket_09,R32_Z_6,Miami FL,Z07
-Bracket_09,R32_Z_7,Purdue,Z02
-Bracket_09,S16_Z_0,LIU Brooklyn,Z16
+Bracket_09,R32_Z_7,Queens NC,Z15
+Bracket_09,S16_Z_0,Arizona,Z01
 Bracket_09,S16_Z_1,Arkansas,Z04
-Bracket_09,S16_Z_2,Texas,Z11
-Bracket_09,S16_Z_3,Purdue,Z02
+Bracket_09,S16_Z_2,Gonzaga,Z03
+Bracket_09,S16_Z_3,Miami FL,Z07
 Bracket_09,E8_Z_0,Arkansas,Z04
-Bracket_09,E8_Z_1,Texas,Z11
-Bracket_09,RegFinal_Z,Texas,Z11
-Bracket_09,F4_WX,Kansas,W04
+Bracket_09,E8_Z_1,Gonzaga,Z03
+Bracket_09,RegFinal_Z,Arkansas,Z04
+Bracket_09,F4_WX,Duke,W01
 Bracket_09,F4_YZ,Iowa St,Y02
-Bracket_09,NCG,Kansas,W04
-Bracket_09,Champion,Kansas,W04
-Bracket_10,R32_W_0,Duke,W01
+Bracket_09,NCG,Iowa St,Y02
+Bracket_09,Champion,Iowa St,Y02
+Bracket_10,R32_W_0,Siena,W16
 Bracket_10,R32_W_1,Ohio St,W08
-Bracket_10,R32_W_2,Northern Iowa,W12
+Bracket_10,R32_W_2,St John's,W05
 Bracket_10,R32_W_3,Kansas,W04
-Bracket_10,R32_W_4,Louisville,W06
+Bracket_10,R32_W_4,South Florida,W11
 Bracket_10,R32_W_5,Michigan St,W03
 Bracket_10,R32_W_6,UCLA,W07
 Bracket_10,R32_W_7,Connecticut,W02
-Bracket_10,S16_W_0,Duke,W01
+Bracket_10,S16_W_0,Ohio St,W08
 Bracket_10,S16_W_1,Kansas,W04
 Bracket_10,S16_W_2,Michigan St,W03
 Bracket_10,S16_W_3,Connecticut,W02
-Bracket_10,E8_W_0,Duke,W01
-Bracket_10,E8_W_1,Connecticut,W02
-Bracket_10,RegFinal_W,Connecticut,W02
+Bracket_10,E8_W_0,Kansas,W04
+Bracket_10,E8_W_1,Michigan St,W03
+Bracket_10,RegFinal_W,Kansas,W04
 Bracket_10,FF_X16,Lehigh,X16a
 Bracket_10,R32_X_0,Florida,X01
 Bracket_10,R32_X_1,Clemson,X08
-Bracket_10,R32_X_2,Vanderbilt,X05
+Bracket_10,R32_X_2,McNeese St,X12
 Bracket_10,R32_X_3,Nebraska,X04
-Bracket_10,R32_X_4,VCU,X11
+Bracket_10,R32_X_4,North Carolina,X06
 Bracket_10,R32_X_5,Illinois,X03
 Bracket_10,R32_X_6,St Mary's CA,X07
 Bracket_10,R32_X_7,Houston,X02
-Bracket_10,S16_X_0,Clemson,X08
+Bracket_10,S16_X_0,Florida,X01
 Bracket_10,S16_X_1,Nebraska,X04
-Bracket_10,S16_X_2,Illinois,X03
+Bracket_10,S16_X_2,North Carolina,X06
 Bracket_10,S16_X_3,Houston,X02
-Bracket_10,E8_X_0,Clemson,X08
+Bracket_10,E8_X_0,Nebraska,X04
 Bracket_10,E8_X_1,Houston,X02
 Bracket_10,RegFinal_X,Houston,X02
-Bracket_10,FF_Y11,Miami OH,Y11a
+Bracket_10,FF_Y11,SMU,Y11b
 Bracket_10,R32_Y_0,Michigan,Y01
 Bracket_10,R32_Y_1,Georgia,Y08
-Bracket_10,R32_Y_2,Texas Tech,Y05
+Bracket_10,R32_Y_2,Akron,Y12
 Bracket_10,R32_Y_3,Alabama,Y04
-Bracket_10,R32_Y_4,Tennessee,Y06
+Bracket_10,R32_Y_4,SMU,Y11b
 Bracket_10,R32_Y_5,Virginia,Y03
 Bracket_10,R32_Y_6,Santa Clara,Y10
 Bracket_10,R32_Y_7,Iowa St,Y02
 Bracket_10,S16_Y_0,Michigan,Y01
-Bracket_10,S16_Y_1,Texas Tech,Y05
-Bracket_10,S16_Y_2,Virginia,Y03
+Bracket_10,S16_Y_1,Alabama,Y04
+Bracket_10,S16_Y_2,SMU,Y11b
 Bracket_10,S16_Y_3,Iowa St,Y02
 Bracket_10,E8_Y_0,Michigan,Y01
-Bracket_10,E8_Y_1,Virginia,Y03
+Bracket_10,E8_Y_1,SMU,Y11b
 Bracket_10,RegFinal_Y,Michigan,Y01
 Bracket_10,R32_Z_0,Arizona,Z01
 Bracket_10,R32_Z_1,Utah St,Z09
-Bracket_10,R32_Z_2,High Point,Z12
-Bracket_10,R32_Z_3,Hawaii,Z13
+Bracket_10,R32_Z_2,Wisconsin,Z05
+Bracket_10,R32_Z_3,Arkansas,Z04
 Bracket_10,R32_Z_4,BYU,Z06
 Bracket_10,R32_Z_5,Gonzaga,Z03
 Bracket_10,R32_Z_6,Miami FL,Z07
-Bracket_10,R32_Z_7,Queens NC,Z15
+Bracket_10,R32_Z_7,Purdue,Z02
 Bracket_10,S16_Z_0,Arizona,Z01
-Bracket_10,S16_Z_1,High Point,Z12
-Bracket_10,S16_Z_2,Gonzaga,Z03
-Bracket_10,S16_Z_3,Miami FL,Z07
+Bracket_10,S16_Z_1,Arkansas,Z04
+Bracket_10,S16_Z_2,BYU,Z06
+Bracket_10,S16_Z_3,Purdue,Z02
 Bracket_10,E8_Z_0,Arizona,Z01
-Bracket_10,E8_Z_1,Gonzaga,Z03
-Bracket_10,RegFinal_Z,Gonzaga,Z03
-Bracket_10,F4_WX,Houston,X02
-Bracket_10,F4_YZ,Gonzaga,Z03
-Bracket_10,NCG,Gonzaga,Z03
-Bracket_10,Champion,Gonzaga,Z03
+Bracket_10,E8_Z_1,Purdue,Z02
+Bracket_10,RegFinal_Z,Arizona,Z01
+Bracket_10,F4_WX,Kansas,W04
+Bracket_10,F4_YZ,Michigan,Y01
+Bracket_10,NCG,Kansas,W04
+Bracket_10,Champion,Kansas,W04
 Bracket_11,R32_W_0,Duke,W01
 Bracket_11,R32_W_1,Ohio St,W08
-Bracket_11,R32_W_2,Northern Iowa,W12
-Bracket_11,R32_W_3,Cal Baptist,W13
-Bracket_11,R32_W_4,South Florida,W11
+Bracket_11,R32_W_2,St John's,W05
+Bracket_11,R32_W_3,Kansas,W04
+Bracket_11,R32_W_4,Louisville,W06
 Bracket_11,R32_W_5,Michigan St,W03
 Bracket_11,R32_W_6,UCLA,W07
 Bracket_11,R32_W_7,Connecticut,W02
-Bracket_11,S16_W_0,Ohio St,W08
-Bracket_11,S16_W_1,Northern Iowa,W12
+Bracket_11,S16_W_0,Duke,W01
+Bracket_11,S16_W_1,Kansas,W04
 Bracket_11,S16_W_2,Michigan St,W03
 Bracket_11,S16_W_3,UCLA,W07
-Bracket_11,E8_W_0,Ohio St,W08
-Bracket_11,E8_W_1,UCLA,W07
-Bracket_11,RegFinal_W,Ohio St,W08
-Bracket_11,FF_X16,Prairie View,X16b
+Bracket_11,E8_W_0,Duke,W01
+Bracket_11,E8_W_1,Michigan St,W03
+Bracket_11,RegFinal_W,Duke,W01
+Bracket_11,FF_X16,Lehigh,X16a
 Bracket_11,R32_X_0,Florida,X01
 Bracket_11,R32_X_1,Iowa,X09
 Bracket_11,R32_X_2,Vanderbilt,X05
 Bracket_11,R32_X_3,Nebraska,X04
-Bracket_11,R32_X_4,North Carolina,X06
+Bracket_11,R32_X_4,VCU,X11
 Bracket_11,R32_X_5,Illinois,X03
-Bracket_11,R32_X_6,Texas A&M,X10
-Bracket_11,R32_X_7,Idaho,X15
-Bracket_11,S16_X_0,Florida,X01
+Bracket_11,R32_X_6,St Mary's CA,X07
+Bracket_11,R32_X_7,Houston,X02
+Bracket_11,S16_X_0,Iowa,X09
 Bracket_11,S16_X_1,Vanderbilt,X05
 Bracket_11,S16_X_2,Illinois,X03
-Bracket_11,S16_X_3,Texas A&M,X10
+Bracket_11,S16_X_3,Houston,X02
 Bracket_11,E8_X_0,Vanderbilt,X05
 Bracket_11,E8_X_1,Illinois,X03
 Bracket_11,RegFinal_X,Illinois,X03
-Bracket_11,FF_Y11,Miami OH,Y11a
+Bracket_11,FF_Y11,SMU,Y11b
 Bracket_11,R32_Y_0,Michigan,Y01
-Bracket_11,R32_Y_1,St Louis,Y09
+Bracket_11,R32_Y_1,Georgia,Y08
 Bracket_11,R32_Y_2,Texas Tech,Y05
-Bracket_11,R32_Y_3,Hofstra,Y13
+Bracket_11,R32_Y_3,Alabama,Y04
 Bracket_11,R32_Y_4,Tennessee,Y06
-Bracket_11,R32_Y_5,Virginia,Y03
+Bracket_11,R32_Y_5,Wright St,Y14
 Bracket_11,R32_Y_6,Kentucky,Y07
 Bracket_11,R32_Y_7,Iowa St,Y02
 Bracket_11,S16_Y_0,Michigan,Y01
@@ -709,38 +709,38 @@ Bracket_11,RegFinal_Y,Michigan,Y01
 Bracket_11,R32_Z_0,Arizona,Z01
 Bracket_11,R32_Z_1,Utah St,Z09
 Bracket_11,R32_Z_2,Wisconsin,Z05
-Bracket_11,R32_Z_3,Arkansas,Z04
+Bracket_11,R32_Z_3,Hawaii,Z13
 Bracket_11,R32_Z_4,BYU,Z06
 Bracket_11,R32_Z_5,Gonzaga,Z03
-Bracket_11,R32_Z_6,Missouri,Z10
+Bracket_11,R32_Z_6,Miami FL,Z07
 Bracket_11,R32_Z_7,Purdue,Z02
 Bracket_11,S16_Z_0,Arizona,Z01
-Bracket_11,S16_Z_1,Arkansas,Z04
+Bracket_11,S16_Z_1,Wisconsin,Z05
 Bracket_11,S16_Z_2,Gonzaga,Z03
 Bracket_11,S16_Z_3,Purdue,Z02
-Bracket_11,E8_Z_0,Arizona,Z01
+Bracket_11,E8_Z_0,Wisconsin,Z05
 Bracket_11,E8_Z_1,Gonzaga,Z03
 Bracket_11,RegFinal_Z,Gonzaga,Z03
 Bracket_11,F4_WX,Illinois,X03
-Bracket_11,F4_YZ,Michigan,Y01
+Bracket_11,F4_YZ,Gonzaga,Z03
 Bracket_11,NCG,Illinois,X03
 Bracket_11,Champion,Illinois,X03
-Bracket_12,R32_W_0,Duke,W01
+Bracket_12,R32_W_0,Siena,W16
 Bracket_12,R32_W_1,Ohio St,W08
-Bracket_12,R32_W_2,Northern Iowa,W12
+Bracket_12,R32_W_2,St John's,W05
 Bracket_12,R32_W_3,Kansas,W04
 Bracket_12,R32_W_4,South Florida,W11
 Bracket_12,R32_W_5,Michigan St,W03
 Bracket_12,R32_W_6,UCLA,W07
 Bracket_12,R32_W_7,Connecticut,W02
-Bracket_12,S16_W_0,Duke,W01
+Bracket_12,S16_W_0,Ohio St,W08
 Bracket_12,S16_W_1,Kansas,W04
 Bracket_12,S16_W_2,Michigan St,W03
-Bracket_12,S16_W_3,UCLA,W07
-Bracket_12,E8_W_0,Duke,W01
+Bracket_12,S16_W_3,Connecticut,W02
+Bracket_12,E8_W_0,Kansas,W04
 Bracket_12,E8_W_1,Michigan St,W03
-Bracket_12,RegFinal_W,Michigan St,W03
-Bracket_12,FF_X16,Prairie View,X16b
+Bracket_12,RegFinal_W,Kansas,W04
+Bracket_12,FF_X16,Lehigh,X16a
 Bracket_12,R32_X_0,Florida,X01
 Bracket_12,R32_X_1,Clemson,X08
 Bracket_12,R32_X_2,Vanderbilt,X05
@@ -748,14 +748,14 @@ Bracket_12,R32_X_3,Nebraska,X04
 Bracket_12,R32_X_4,VCU,X11
 Bracket_12,R32_X_5,Illinois,X03
 Bracket_12,R32_X_6,Texas A&M,X10
-Bracket_12,R32_X_7,Houston,X02
-Bracket_12,S16_X_0,Florida,X01
+Bracket_12,R32_X_7,Idaho,X15
+Bracket_12,S16_X_0,Clemson,X08
 Bracket_12,S16_X_1,Vanderbilt,X05
 Bracket_12,S16_X_2,VCU,X11
-Bracket_12,S16_X_3,Houston,X02
-Bracket_12,E8_X_0,Florida,X01
-Bracket_12,E8_X_1,Houston,X02
-Bracket_12,RegFinal_X,Florida,X01
+Bracket_12,S16_X_3,Texas A&M,X10
+Bracket_12,E8_X_0,Vanderbilt,X05
+Bracket_12,E8_X_1,Texas A&M,X10
+Bracket_12,RegFinal_X,Vanderbilt,X05
 Bracket_12,FF_Y11,SMU,Y11b
 Bracket_12,R32_Y_0,Michigan,Y01
 Bracket_12,R32_Y_1,Georgia,Y08
@@ -766,248 +766,248 @@ Bracket_12,R32_Y_5,Virginia,Y03
 Bracket_12,R32_Y_6,Santa Clara,Y10
 Bracket_12,R32_Y_7,Iowa St,Y02
 Bracket_12,S16_Y_0,Michigan,Y01
-Bracket_12,S16_Y_1,Texas Tech,Y05
+Bracket_12,S16_Y_1,Alabama,Y04
 Bracket_12,S16_Y_2,Virginia,Y03
 Bracket_12,S16_Y_3,Iowa St,Y02
-Bracket_12,E8_Y_0,Texas Tech,Y05
-Bracket_12,E8_Y_1,Virginia,Y03
-Bracket_12,RegFinal_Y,Texas Tech,Y05
+Bracket_12,E8_Y_0,Alabama,Y04
+Bracket_12,E8_Y_1,Iowa St,Y02
+Bracket_12,RegFinal_Y,Alabama,Y04
 Bracket_12,R32_Z_0,Arizona,Z01
-Bracket_12,R32_Z_1,Villanova,Z08
+Bracket_12,R32_Z_1,Utah St,Z09
 Bracket_12,R32_Z_2,Wisconsin,Z05
 Bracket_12,R32_Z_3,Arkansas,Z04
-Bracket_12,R32_Z_4,BYU,Z06
+Bracket_12,R32_Z_4,Texas,Z11
 Bracket_12,R32_Z_5,Gonzaga,Z03
-Bracket_12,R32_Z_6,Miami FL,Z07
+Bracket_12,R32_Z_6,Missouri,Z10
 Bracket_12,R32_Z_7,Purdue,Z02
 Bracket_12,S16_Z_0,Arizona,Z01
 Bracket_12,S16_Z_1,Arkansas,Z04
 Bracket_12,S16_Z_2,Gonzaga,Z03
 Bracket_12,S16_Z_3,Purdue,Z02
 Bracket_12,E8_Z_0,Arizona,Z01
-Bracket_12,E8_Z_1,Purdue,Z02
+Bracket_12,E8_Z_1,Gonzaga,Z03
 Bracket_12,RegFinal_Z,Arizona,Z01
-Bracket_12,F4_WX,Florida,X01
-Bracket_12,F4_YZ,Texas Tech,Y05
-Bracket_12,NCG,Texas Tech,Y05
-Bracket_12,Champion,Texas Tech,Y05
+Bracket_12,F4_WX,Vanderbilt,X05
+Bracket_12,F4_YZ,Alabama,Y04
+Bracket_12,NCG,Alabama,Y04
+Bracket_12,Champion,Alabama,Y04
 Bracket_13,R32_W_0,Duke,W01
 Bracket_13,R32_W_1,Ohio St,W08
 Bracket_13,R32_W_2,St John's,W05
 Bracket_13,R32_W_3,Kansas,W04
-Bracket_13,R32_W_4,Louisville,W06
+Bracket_13,R32_W_4,South Florida,W11
 Bracket_13,R32_W_5,Michigan St,W03
 Bracket_13,R32_W_6,UCLA,W07
 Bracket_13,R32_W_7,Connecticut,W02
 Bracket_13,S16_W_0,Duke,W01
-Bracket_13,S16_W_1,St John's,W05
+Bracket_13,S16_W_1,Kansas,W04
 Bracket_13,S16_W_2,Michigan St,W03
-Bracket_13,S16_W_3,UCLA,W07
+Bracket_13,S16_W_3,Connecticut,W02
 Bracket_13,E8_W_0,Duke,W01
 Bracket_13,E8_W_1,Michigan St,W03
-Bracket_13,RegFinal_W,Duke,W01
-Bracket_13,FF_X16,Lehigh,X16a
+Bracket_13,RegFinal_W,Michigan St,W03
+Bracket_13,FF_X16,Prairie View,X16b
 Bracket_13,R32_X_0,Florida,X01
 Bracket_13,R32_X_1,Clemson,X08
-Bracket_13,R32_X_2,Vanderbilt,X05
-Bracket_13,R32_X_3,Troy,X13
-Bracket_13,R32_X_4,VCU,X11
+Bracket_13,R32_X_2,McNeese St,X12
+Bracket_13,R32_X_3,Nebraska,X04
+Bracket_13,R32_X_4,North Carolina,X06
 Bracket_13,R32_X_5,Illinois,X03
 Bracket_13,R32_X_6,St Mary's CA,X07
 Bracket_13,R32_X_7,Houston,X02
 Bracket_13,S16_X_0,Florida,X01
-Bracket_13,S16_X_1,Vanderbilt,X05
-Bracket_13,S16_X_2,VCU,X11
-Bracket_13,S16_X_3,St Mary's CA,X07
+Bracket_13,S16_X_1,Nebraska,X04
+Bracket_13,S16_X_2,Illinois,X03
+Bracket_13,S16_X_3,Houston,X02
 Bracket_13,E8_X_0,Florida,X01
-Bracket_13,E8_X_1,VCU,X11
-Bracket_13,RegFinal_X,VCU,X11
-Bracket_13,FF_Y11,SMU,Y11b
+Bracket_13,E8_X_1,Houston,X02
+Bracket_13,RegFinal_X,Florida,X01
+Bracket_13,FF_Y11,Miami OH,Y11a
 Bracket_13,R32_Y_0,Michigan,Y01
 Bracket_13,R32_Y_1,Georgia,Y08
 Bracket_13,R32_Y_2,Texas Tech,Y05
 Bracket_13,R32_Y_3,Alabama,Y04
-Bracket_13,R32_Y_4,Tennessee,Y06
+Bracket_13,R32_Y_4,Miami OH,Y11a
 Bracket_13,R32_Y_5,Virginia,Y03
 Bracket_13,R32_Y_6,Kentucky,Y07
 Bracket_13,R32_Y_7,Iowa St,Y02
 Bracket_13,S16_Y_0,Michigan,Y01
-Bracket_13,S16_Y_1,Alabama,Y04
+Bracket_13,S16_Y_1,Texas Tech,Y05
 Bracket_13,S16_Y_2,Virginia,Y03
-Bracket_13,S16_Y_3,Iowa St,Y02
+Bracket_13,S16_Y_3,Kentucky,Y07
 Bracket_13,E8_Y_0,Michigan,Y01
-Bracket_13,E8_Y_1,Virginia,Y03
-Bracket_13,RegFinal_Y,Michigan,Y01
+Bracket_13,E8_Y_1,Kentucky,Y07
+Bracket_13,RegFinal_Y,Kentucky,Y07
 Bracket_13,R32_Z_0,Arizona,Z01
 Bracket_13,R32_Z_1,Utah St,Z09
 Bracket_13,R32_Z_2,Wisconsin,Z05
 Bracket_13,R32_Z_3,Arkansas,Z04
-Bracket_13,R32_Z_4,Texas,Z11
-Bracket_13,R32_Z_5,Kennesaw,Z14
+Bracket_13,R32_Z_4,BYU,Z06
+Bracket_13,R32_Z_5,Gonzaga,Z03
 Bracket_13,R32_Z_6,Miami FL,Z07
 Bracket_13,R32_Z_7,Purdue,Z02
 Bracket_13,S16_Z_0,Arizona,Z01
 Bracket_13,S16_Z_1,Arkansas,Z04
-Bracket_13,S16_Z_2,Texas,Z11
+Bracket_13,S16_Z_2,Gonzaga,Z03
 Bracket_13,S16_Z_3,Purdue,Z02
 Bracket_13,E8_Z_0,Arizona,Z01
 Bracket_13,E8_Z_1,Purdue,Z02
-Bracket_13,RegFinal_Z,Arizona,Z01
-Bracket_13,F4_WX,VCU,X11
-Bracket_13,F4_YZ,Arizona,Z01
-Bracket_13,NCG,VCU,X11
-Bracket_13,Champion,VCU,X11
+Bracket_13,RegFinal_Z,Purdue,Z02
+Bracket_13,F4_WX,Michigan St,W03
+Bracket_13,F4_YZ,Purdue,Z02
+Bracket_13,NCG,Michigan St,W03
+Bracket_13,Champion,Michigan St,W03
 Bracket_14,R32_W_0,Duke,W01
-Bracket_14,R32_W_1,Ohio St,W08
+Bracket_14,R32_W_1,TCU,W09
 Bracket_14,R32_W_2,Northern Iowa,W12
 Bracket_14,R32_W_3,Kansas,W04
 Bracket_14,R32_W_4,Louisville,W06
 Bracket_14,R32_W_5,Michigan St,W03
 Bracket_14,R32_W_6,UCLA,W07
 Bracket_14,R32_W_7,Connecticut,W02
-Bracket_14,S16_W_0,Ohio St,W08
+Bracket_14,S16_W_0,Duke,W01
 Bracket_14,S16_W_1,Kansas,W04
-Bracket_14,S16_W_2,Louisville,W06
+Bracket_14,S16_W_2,Michigan St,W03
 Bracket_14,S16_W_3,Connecticut,W02
-Bracket_14,E8_W_0,Ohio St,W08
+Bracket_14,E8_W_0,Duke,W01
 Bracket_14,E8_W_1,Connecticut,W02
 Bracket_14,RegFinal_W,Connecticut,W02
-Bracket_14,FF_X16,Prairie View,X16b
+Bracket_14,FF_X16,Lehigh,X16a
 Bracket_14,R32_X_0,Florida,X01
 Bracket_14,R32_X_1,Clemson,X08
-Bracket_14,R32_X_2,Vanderbilt,X05
+Bracket_14,R32_X_2,McNeese St,X12
 Bracket_14,R32_X_3,Nebraska,X04
 Bracket_14,R32_X_4,VCU,X11
 Bracket_14,R32_X_5,Illinois,X03
 Bracket_14,R32_X_6,St Mary's CA,X07
 Bracket_14,R32_X_7,Houston,X02
-Bracket_14,S16_X_0,Clemson,X08
-Bracket_14,S16_X_1,Vanderbilt,X05
+Bracket_14,S16_X_0,Florida,X01
+Bracket_14,S16_X_1,Nebraska,X04
 Bracket_14,S16_X_2,Illinois,X03
 Bracket_14,S16_X_3,Houston,X02
-Bracket_14,E8_X_0,Vanderbilt,X05
+Bracket_14,E8_X_0,Florida,X01
 Bracket_14,E8_X_1,Houston,X02
-Bracket_14,RegFinal_X,Vanderbilt,X05
+Bracket_14,RegFinal_X,Houston,X02
 Bracket_14,FF_Y11,SMU,Y11b
 Bracket_14,R32_Y_0,Michigan,Y01
 Bracket_14,R32_Y_1,Georgia,Y08
 Bracket_14,R32_Y_2,Akron,Y12
 Bracket_14,R32_Y_3,Alabama,Y04
-Bracket_14,R32_Y_4,Tennessee,Y06
+Bracket_14,R32_Y_4,SMU,Y11b
 Bracket_14,R32_Y_5,Virginia,Y03
-Bracket_14,R32_Y_6,Santa Clara,Y10
+Bracket_14,R32_Y_6,Kentucky,Y07
 Bracket_14,R32_Y_7,Iowa St,Y02
-Bracket_14,S16_Y_0,Michigan,Y01
+Bracket_14,S16_Y_0,Georgia,Y08
 Bracket_14,S16_Y_1,Akron,Y12
 Bracket_14,S16_Y_2,Virginia,Y03
 Bracket_14,S16_Y_3,Iowa St,Y02
-Bracket_14,E8_Y_0,Michigan,Y01
+Bracket_14,E8_Y_0,Akron,Y12
 Bracket_14,E8_Y_1,Virginia,Y03
-Bracket_14,RegFinal_Y,Michigan,Y01
+Bracket_14,RegFinal_Y,Virginia,Y03
 Bracket_14,R32_Z_0,Arizona,Z01
-Bracket_14,R32_Z_1,Villanova,Z08
+Bracket_14,R32_Z_1,Utah St,Z09
 Bracket_14,R32_Z_2,Wisconsin,Z05
 Bracket_14,R32_Z_3,Arkansas,Z04
 Bracket_14,R32_Z_4,BYU,Z06
 Bracket_14,R32_Z_5,Gonzaga,Z03
-Bracket_14,R32_Z_6,Missouri,Z10
+Bracket_14,R32_Z_6,Miami FL,Z07
 Bracket_14,R32_Z_7,Purdue,Z02
 Bracket_14,S16_Z_0,Arizona,Z01
-Bracket_14,S16_Z_1,Wisconsin,Z05
-Bracket_14,S16_Z_2,Gonzaga,Z03
+Bracket_14,S16_Z_1,Arkansas,Z04
+Bracket_14,S16_Z_2,BYU,Z06
 Bracket_14,S16_Z_3,Purdue,Z02
 Bracket_14,E8_Z_0,Arizona,Z01
-Bracket_14,E8_Z_1,Gonzaga,Z03
+Bracket_14,E8_Z_1,BYU,Z06
 Bracket_14,RegFinal_Z,Arizona,Z01
-Bracket_14,F4_WX,Vanderbilt,X05
-Bracket_14,F4_YZ,Arizona,Z01
-Bracket_14,NCG,Vanderbilt,X05
-Bracket_14,Champion,Vanderbilt,X05
+Bracket_14,F4_WX,Connecticut,W02
+Bracket_14,F4_YZ,Virginia,Y03
+Bracket_14,NCG,Connecticut,W02
+Bracket_14,Champion,Connecticut,W02
 Bracket_15,R32_W_0,Duke,W01
-Bracket_15,R32_W_1,Ohio St,W08
-Bracket_15,R32_W_2,St John's,W05
-Bracket_15,R32_W_3,Kansas,W04
+Bracket_15,R32_W_1,TCU,W09
+Bracket_15,R32_W_2,Northern Iowa,W12
+Bracket_15,R32_W_3,Cal Baptist,W13
 Bracket_15,R32_W_4,Louisville,W06
-Bracket_15,R32_W_5,N Dakota St,W14
+Bracket_15,R32_W_5,Michigan St,W03
 Bracket_15,R32_W_6,UCLA,W07
 Bracket_15,R32_W_7,Connecticut,W02
 Bracket_15,S16_W_0,Duke,W01
-Bracket_15,S16_W_1,Kansas,W04
+Bracket_15,S16_W_1,Northern Iowa,W12
 Bracket_15,S16_W_2,Louisville,W06
 Bracket_15,S16_W_3,Connecticut,W02
-Bracket_15,E8_W_0,Duke,W01
+Bracket_15,E8_W_0,Northern Iowa,W12
 Bracket_15,E8_W_1,Connecticut,W02
 Bracket_15,RegFinal_W,Connecticut,W02
 Bracket_15,FF_X16,Prairie View,X16b
-Bracket_15,R32_X_0,Florida,X01
-Bracket_15,R32_X_1,Iowa,X09
+Bracket_15,R32_X_0,Prairie View,X16b
+Bracket_15,R32_X_1,Clemson,X08
 Bracket_15,R32_X_2,Vanderbilt,X05
 Bracket_15,R32_X_3,Nebraska,X04
-Bracket_15,R32_X_4,North Carolina,X06
+Bracket_15,R32_X_4,VCU,X11
 Bracket_15,R32_X_5,Illinois,X03
 Bracket_15,R32_X_6,Texas A&M,X10
-Bracket_15,R32_X_7,Houston,X02
-Bracket_15,S16_X_0,Florida,X01
-Bracket_15,S16_X_1,Nebraska,X04
+Bracket_15,R32_X_7,Idaho,X15
+Bracket_15,S16_X_0,Clemson,X08
+Bracket_15,S16_X_1,Vanderbilt,X05
 Bracket_15,S16_X_2,Illinois,X03
-Bracket_15,S16_X_3,Houston,X02
-Bracket_15,E8_X_0,Florida,X01
-Bracket_15,E8_X_1,Houston,X02
-Bracket_15,RegFinal_X,Florida,X01
+Bracket_15,S16_X_3,Texas A&M,X10
+Bracket_15,E8_X_0,Vanderbilt,X05
+Bracket_15,E8_X_1,Illinois,X03
+Bracket_15,RegFinal_X,Vanderbilt,X05
 Bracket_15,FF_Y11,Miami OH,Y11a
 Bracket_15,R32_Y_0,Michigan,Y01
 Bracket_15,R32_Y_1,Georgia,Y08
 Bracket_15,R32_Y_2,Texas Tech,Y05
 Bracket_15,R32_Y_3,Alabama,Y04
-Bracket_15,R32_Y_4,Miami OH,Y11a
+Bracket_15,R32_Y_4,Tennessee,Y06
 Bracket_15,R32_Y_5,Virginia,Y03
 Bracket_15,R32_Y_6,Santa Clara,Y10
 Bracket_15,R32_Y_7,Iowa St,Y02
 Bracket_15,S16_Y_0,Michigan,Y01
 Bracket_15,S16_Y_1,Alabama,Y04
 Bracket_15,S16_Y_2,Virginia,Y03
-Bracket_15,S16_Y_3,Santa Clara,Y10
-Bracket_15,E8_Y_0,Alabama,Y04
-Bracket_15,E8_Y_1,Virginia,Y03
-Bracket_15,RegFinal_Y,Virginia,Y03
+Bracket_15,S16_Y_3,Iowa St,Y02
+Bracket_15,E8_Y_0,Michigan,Y01
+Bracket_15,E8_Y_1,Iowa St,Y02
+Bracket_15,RegFinal_Y,Michigan,Y01
 Bracket_15,R32_Z_0,Arizona,Z01
-Bracket_15,R32_Z_1,Utah St,Z09
+Bracket_15,R32_Z_1,Villanova,Z08
 Bracket_15,R32_Z_2,Wisconsin,Z05
-Bracket_15,R32_Z_3,Arkansas,Z04
-Bracket_15,R32_Z_4,Texas,Z11
+Bracket_15,R32_Z_3,Hawaii,Z13
+Bracket_15,R32_Z_4,BYU,Z06
 Bracket_15,R32_Z_5,Gonzaga,Z03
 Bracket_15,R32_Z_6,Miami FL,Z07
-Bracket_15,R32_Z_7,Queens NC,Z15
+Bracket_15,R32_Z_7,Purdue,Z02
 Bracket_15,S16_Z_0,Arizona,Z01
-Bracket_15,S16_Z_1,Arkansas,Z04
-Bracket_15,S16_Z_2,Gonzaga,Z03
-Bracket_15,S16_Z_3,Queens NC,Z15
+Bracket_15,S16_Z_1,Wisconsin,Z05
+Bracket_15,S16_Z_2,BYU,Z06
+Bracket_15,S16_Z_3,Purdue,Z02
 Bracket_15,E8_Z_0,Arizona,Z01
-Bracket_15,E8_Z_1,Queens NC,Z15
+Bracket_15,E8_Z_1,BYU,Z06
 Bracket_15,RegFinal_Z,Arizona,Z01
-Bracket_15,F4_WX,Connecticut,W02
-Bracket_15,F4_YZ,Virginia,Y03
-Bracket_15,NCG,Virginia,Y03
-Bracket_15,Champion,Virginia,Y03
-Bracket_16,R32_W_0,Duke,W01
-Bracket_16,R32_W_1,TCU,W09
-Bracket_16,R32_W_2,St John's,W05
+Bracket_15,F4_WX,Vanderbilt,X05
+Bracket_15,F4_YZ,Arizona,Z01
+Bracket_15,NCG,Vanderbilt,X05
+Bracket_15,Champion,Vanderbilt,X05
+Bracket_16,R32_W_0,Siena,W16
+Bracket_16,R32_W_1,Ohio St,W08
+Bracket_16,R32_W_2,Northern Iowa,W12
 Bracket_16,R32_W_3,Kansas,W04
-Bracket_16,R32_W_4,Louisville,W06
+Bracket_16,R32_W_4,South Florida,W11
 Bracket_16,R32_W_5,Michigan St,W03
-Bracket_16,R32_W_6,UCF,W10
+Bracket_16,R32_W_6,UCLA,W07
 Bracket_16,R32_W_7,Connecticut,W02
-Bracket_16,S16_W_0,Duke,W01
+Bracket_16,S16_W_0,Ohio St,W08
 Bracket_16,S16_W_1,Kansas,W04
 Bracket_16,S16_W_2,Michigan St,W03
 Bracket_16,S16_W_3,Connecticut,W02
-Bracket_16,E8_W_0,Duke,W01
+Bracket_16,E8_W_0,Kansas,W04
 Bracket_16,E8_W_1,Connecticut,W02
-Bracket_16,RegFinal_W,Duke,W01
+Bracket_16,RegFinal_W,Kansas,W04
 Bracket_16,FF_X16,Prairie View,X16b
 Bracket_16,R32_X_0,Florida,X01
-Bracket_16,R32_X_1,Clemson,X08
-Bracket_16,R32_X_2,Vanderbilt,X05
+Bracket_16,R32_X_1,Iowa,X09
+Bracket_16,R32_X_2,McNeese St,X12
 Bracket_16,R32_X_3,Nebraska,X04
 Bracket_16,R32_X_4,VCU,X11
 Bracket_16,R32_X_5,Illinois,X03
@@ -1015,7 +1015,7 @@ Bracket_16,R32_X_6,St Mary's CA,X07
 Bracket_16,R32_X_7,Houston,X02
 Bracket_16,S16_X_0,Florida,X01
 Bracket_16,S16_X_1,Nebraska,X04
-Bracket_16,S16_X_2,VCU,X11
+Bracket_16,S16_X_2,Illinois,X03
 Bracket_16,S16_X_3,Houston,X02
 Bracket_16,E8_X_0,Florida,X01
 Bracket_16,E8_X_1,Houston,X02
@@ -1023,43 +1023,43 @@ Bracket_16,RegFinal_X,Florida,X01
 Bracket_16,FF_Y11,Miami OH,Y11a
 Bracket_16,R32_Y_0,Michigan,Y01
 Bracket_16,R32_Y_1,Georgia,Y08
-Bracket_16,R32_Y_2,Texas Tech,Y05
-Bracket_16,R32_Y_3,Alabama,Y04
-Bracket_16,R32_Y_4,Tennessee,Y06
-Bracket_16,R32_Y_5,Wright St,Y14
-Bracket_16,R32_Y_6,Santa Clara,Y10
+Bracket_16,R32_Y_2,Akron,Y12
+Bracket_16,R32_Y_3,Hofstra,Y13
+Bracket_16,R32_Y_4,Miami OH,Y11a
+Bracket_16,R32_Y_5,Virginia,Y03
+Bracket_16,R32_Y_6,Kentucky,Y07
 Bracket_16,R32_Y_7,Iowa St,Y02
 Bracket_16,S16_Y_0,Michigan,Y01
-Bracket_16,S16_Y_1,Alabama,Y04
-Bracket_16,S16_Y_2,Tennessee,Y06
+Bracket_16,S16_Y_1,Hofstra,Y13
+Bracket_16,S16_Y_2,Virginia,Y03
 Bracket_16,S16_Y_3,Iowa St,Y02
 Bracket_16,E8_Y_0,Michigan,Y01
 Bracket_16,E8_Y_1,Iowa St,Y02
 Bracket_16,RegFinal_Y,Iowa St,Y02
 Bracket_16,R32_Z_0,Arizona,Z01
 Bracket_16,R32_Z_1,Utah St,Z09
-Bracket_16,R32_Z_2,Wisconsin,Z05
+Bracket_16,R32_Z_2,High Point,Z12
 Bracket_16,R32_Z_3,Arkansas,Z04
-Bracket_16,R32_Z_4,Texas,Z11
-Bracket_16,R32_Z_5,Kennesaw,Z14
+Bracket_16,R32_Z_4,BYU,Z06
+Bracket_16,R32_Z_5,Gonzaga,Z03
 Bracket_16,R32_Z_6,Miami FL,Z07
 Bracket_16,R32_Z_7,Purdue,Z02
 Bracket_16,S16_Z_0,Arizona,Z01
 Bracket_16,S16_Z_1,Arkansas,Z04
-Bracket_16,S16_Z_2,Texas,Z11
-Bracket_16,S16_Z_3,Purdue,Z02
-Bracket_16,E8_Z_0,Arizona,Z01
-Bracket_16,E8_Z_1,Texas,Z11
-Bracket_16,RegFinal_Z,Texas,Z11
-Bracket_16,F4_WX,Duke,W01
-Bracket_16,F4_YZ,Texas,Z11
-Bracket_16,NCG,Texas,Z11
-Bracket_16,Champion,Texas,Z11
+Bracket_16,S16_Z_2,Gonzaga,Z03
+Bracket_16,S16_Z_3,Miami FL,Z07
+Bracket_16,E8_Z_0,Arkansas,Z04
+Bracket_16,E8_Z_1,Gonzaga,Z03
+Bracket_16,RegFinal_Z,Gonzaga,Z03
+Bracket_16,F4_WX,Florida,X01
+Bracket_16,F4_YZ,Gonzaga,Z03
+Bracket_16,NCG,Gonzaga,Z03
+Bracket_16,Champion,Gonzaga,Z03
 Bracket_17,R32_W_0,Duke,W01
 Bracket_17,R32_W_1,Ohio St,W08
 Bracket_17,R32_W_2,St John's,W05
 Bracket_17,R32_W_3,Kansas,W04
-Bracket_17,R32_W_4,Louisville,W06
+Bracket_17,R32_W_4,South Florida,W11
 Bracket_17,R32_W_5,Michigan St,W03
 Bracket_17,R32_W_6,UCLA,W07
 Bracket_17,R32_W_7,Connecticut,W02
@@ -1067,10 +1067,10 @@ Bracket_17,S16_W_0,Duke,W01
 Bracket_17,S16_W_1,Kansas,W04
 Bracket_17,S16_W_2,Michigan St,W03
 Bracket_17,S16_W_3,Connecticut,W02
-Bracket_17,E8_W_0,Kansas,W04
-Bracket_17,E8_W_1,Connecticut,W02
-Bracket_17,RegFinal_W,Connecticut,W02
-Bracket_17,FF_X16,Prairie View,X16b
+Bracket_17,E8_W_0,Duke,W01
+Bracket_17,E8_W_1,Michigan St,W03
+Bracket_17,RegFinal_W,Duke,W01
+Bracket_17,FF_X16,Lehigh,X16a
 Bracket_17,R32_X_0,Florida,X01
 Bracket_17,R32_X_1,Clemson,X08
 Bracket_17,R32_X_2,Vanderbilt,X05
@@ -1081,50 +1081,50 @@ Bracket_17,R32_X_6,St Mary's CA,X07
 Bracket_17,R32_X_7,Houston,X02
 Bracket_17,S16_X_0,Florida,X01
 Bracket_17,S16_X_1,Vanderbilt,X05
-Bracket_17,S16_X_2,Illinois,X03
+Bracket_17,S16_X_2,VCU,X11
 Bracket_17,S16_X_3,Houston,X02
 Bracket_17,E8_X_0,Florida,X01
 Bracket_17,E8_X_1,Houston,X02
 Bracket_17,RegFinal_X,Houston,X02
-Bracket_17,FF_Y11,SMU,Y11b
+Bracket_17,FF_Y11,Miami OH,Y11a
 Bracket_17,R32_Y_0,Michigan,Y01
 Bracket_17,R32_Y_1,Georgia,Y08
 Bracket_17,R32_Y_2,Texas Tech,Y05
-Bracket_17,R32_Y_3,Alabama,Y04
+Bracket_17,R32_Y_3,Hofstra,Y13
 Bracket_17,R32_Y_4,Tennessee,Y06
 Bracket_17,R32_Y_5,Virginia,Y03
-Bracket_17,R32_Y_6,Santa Clara,Y10
+Bracket_17,R32_Y_6,Kentucky,Y07
 Bracket_17,R32_Y_7,Iowa St,Y02
-Bracket_17,S16_Y_0,Michigan,Y01
-Bracket_17,S16_Y_1,Alabama,Y04
-Bracket_17,S16_Y_2,Tennessee,Y06
+Bracket_17,S16_Y_0,Georgia,Y08
+Bracket_17,S16_Y_1,Texas Tech,Y05
+Bracket_17,S16_Y_2,Virginia,Y03
 Bracket_17,S16_Y_3,Iowa St,Y02
-Bracket_17,E8_Y_0,Michigan,Y01
-Bracket_17,E8_Y_1,Iowa St,Y02
-Bracket_17,RegFinal_Y,Michigan,Y01
+Bracket_17,E8_Y_0,Texas Tech,Y05
+Bracket_17,E8_Y_1,Virginia,Y03
+Bracket_17,RegFinal_Y,Texas Tech,Y05
 Bracket_17,R32_Z_0,Arizona,Z01
 Bracket_17,R32_Z_1,Villanova,Z08
-Bracket_17,R32_Z_2,Wisconsin,Z05
+Bracket_17,R32_Z_2,High Point,Z12
 Bracket_17,R32_Z_3,Arkansas,Z04
-Bracket_17,R32_Z_4,BYU,Z06
+Bracket_17,R32_Z_4,Texas,Z11
 Bracket_17,R32_Z_5,Kennesaw,Z14
-Bracket_17,R32_Z_6,Miami FL,Z07
+Bracket_17,R32_Z_6,Missouri,Z10
 Bracket_17,R32_Z_7,Purdue,Z02
 Bracket_17,S16_Z_0,Arizona,Z01
 Bracket_17,S16_Z_1,Arkansas,Z04
-Bracket_17,S16_Z_2,BYU,Z06
+Bracket_17,S16_Z_2,Texas,Z11
 Bracket_17,S16_Z_3,Purdue,Z02
 Bracket_17,E8_Z_0,Arizona,Z01
 Bracket_17,E8_Z_1,Purdue,Z02
 Bracket_17,RegFinal_Z,Arizona,Z01
-Bracket_17,F4_WX,Connecticut,W02
-Bracket_17,F4_YZ,Michigan,Y01
-Bracket_17,NCG,Connecticut,W02
-Bracket_17,Champion,Connecticut,W02
+Bracket_17,F4_WX,Duke,W01
+Bracket_17,F4_YZ,Texas Tech,Y05
+Bracket_17,NCG,Texas Tech,Y05
+Bracket_17,Champion,Texas Tech,Y05
 Bracket_18,R32_W_0,Duke,W01
 Bracket_18,R32_W_1,Ohio St,W08
 Bracket_18,R32_W_2,St John's,W05
-Bracket_18,R32_W_3,Cal Baptist,W13
+Bracket_18,R32_W_3,Kansas,W04
 Bracket_18,R32_W_4,Louisville,W06
 Bracket_18,R32_W_5,Michigan St,W03
 Bracket_18,R32_W_6,UCLA,W07
@@ -1134,47 +1134,47 @@ Bracket_18,S16_W_1,St John's,W05
 Bracket_18,S16_W_2,Michigan St,W03
 Bracket_18,S16_W_3,Connecticut,W02
 Bracket_18,E8_W_0,Duke,W01
-Bracket_18,E8_W_1,Michigan St,W03
-Bracket_18,RegFinal_W,Duke,W01
-Bracket_18,FF_X16,Lehigh,X16a
+Bracket_18,E8_W_1,Connecticut,W02
+Bracket_18,RegFinal_W,Connecticut,W02
+Bracket_18,FF_X16,Prairie View,X16b
 Bracket_18,R32_X_0,Florida,X01
-Bracket_18,R32_X_1,Clemson,X08
-Bracket_18,R32_X_2,McNeese St,X12
+Bracket_18,R32_X_1,Iowa,X09
+Bracket_18,R32_X_2,Vanderbilt,X05
 Bracket_18,R32_X_3,Nebraska,X04
 Bracket_18,R32_X_4,VCU,X11
-Bracket_18,R32_X_5,Illinois,X03
+Bracket_18,R32_X_5,Penn,X14
 Bracket_18,R32_X_6,St Mary's CA,X07
 Bracket_18,R32_X_7,Houston,X02
-Bracket_18,S16_X_0,Florida,X01
-Bracket_18,S16_X_1,McNeese St,X12
-Bracket_18,S16_X_2,Illinois,X03
+Bracket_18,S16_X_0,Iowa,X09
+Bracket_18,S16_X_1,Nebraska,X04
+Bracket_18,S16_X_2,VCU,X11
 Bracket_18,S16_X_3,Houston,X02
-Bracket_18,E8_X_0,Florida,X01
+Bracket_18,E8_X_0,Nebraska,X04
 Bracket_18,E8_X_1,Houston,X02
 Bracket_18,RegFinal_X,Houston,X02
 Bracket_18,FF_Y11,Miami OH,Y11a
 Bracket_18,R32_Y_0,Michigan,Y01
-Bracket_18,R32_Y_1,Georgia,Y08
-Bracket_18,R32_Y_2,Texas Tech,Y05
+Bracket_18,R32_Y_1,St Louis,Y09
+Bracket_18,R32_Y_2,Akron,Y12
 Bracket_18,R32_Y_3,Alabama,Y04
 Bracket_18,R32_Y_4,Tennessee,Y06
 Bracket_18,R32_Y_5,Virginia,Y03
 Bracket_18,R32_Y_6,Kentucky,Y07
-Bracket_18,R32_Y_7,Iowa St,Y02
+Bracket_18,R32_Y_7,Tennessee St,Y15
 Bracket_18,S16_Y_0,Michigan,Y01
 Bracket_18,S16_Y_1,Alabama,Y04
-Bracket_18,S16_Y_2,Virginia,Y03
-Bracket_18,S16_Y_3,Iowa St,Y02
-Bracket_18,E8_Y_0,Alabama,Y04
-Bracket_18,E8_Y_1,Iowa St,Y02
-Bracket_18,RegFinal_Y,Iowa St,Y02
+Bracket_18,S16_Y_2,Tennessee,Y06
+Bracket_18,S16_Y_3,Kentucky,Y07
+Bracket_18,E8_Y_0,Michigan,Y01
+Bracket_18,E8_Y_1,Tennessee,Y06
+Bracket_18,RegFinal_Y,Michigan,Y01
 Bracket_18,R32_Z_0,Arizona,Z01
 Bracket_18,R32_Z_1,Utah St,Z09
 Bracket_18,R32_Z_2,Wisconsin,Z05
 Bracket_18,R32_Z_3,Arkansas,Z04
 Bracket_18,R32_Z_4,BYU,Z06
 Bracket_18,R32_Z_5,Kennesaw,Z14
-Bracket_18,R32_Z_6,Missouri,Z10
+Bracket_18,R32_Z_6,Miami FL,Z07
 Bracket_18,R32_Z_7,Purdue,Z02
 Bracket_18,S16_Z_0,Arizona,Z01
 Bracket_18,S16_Z_1,Arkansas,Z04
@@ -1182,14 +1182,14 @@ Bracket_18,S16_Z_2,BYU,Z06
 Bracket_18,S16_Z_3,Purdue,Z02
 Bracket_18,E8_Z_0,Arizona,Z01
 Bracket_18,E8_Z_1,Purdue,Z02
-Bracket_18,RegFinal_Z,Purdue,Z02
+Bracket_18,RegFinal_Z,Arizona,Z01
 Bracket_18,F4_WX,Houston,X02
-Bracket_18,F4_YZ,Iowa St,Y02
-Bracket_18,NCG,Iowa St,Y02
-Bracket_18,Champion,Iowa St,Y02
+Bracket_18,F4_YZ,Arizona,Z01
+Bracket_18,NCG,Arizona,Z01
+Bracket_18,Champion,Arizona,Z01
 Bracket_19,R32_W_0,Duke,W01
-Bracket_19,R32_W_1,TCU,W09
-Bracket_19,R32_W_2,St John's,W05
+Bracket_19,R32_W_1,Ohio St,W08
+Bracket_19,R32_W_2,Northern Iowa,W12
 Bracket_19,R32_W_3,Kansas,W04
 Bracket_19,R32_W_4,Louisville,W06
 Bracket_19,R32_W_5,Michigan St,W03
@@ -1200,56 +1200,56 @@ Bracket_19,S16_W_1,Kansas,W04
 Bracket_19,S16_W_2,Michigan St,W03
 Bracket_19,S16_W_3,Connecticut,W02
 Bracket_19,E8_W_0,Duke,W01
-Bracket_19,E8_W_1,Michigan St,W03
+Bracket_19,E8_W_1,Connecticut,W02
 Bracket_19,RegFinal_W,Duke,W01
 Bracket_19,FF_X16,Lehigh,X16a
 Bracket_19,R32_X_0,Florida,X01
 Bracket_19,R32_X_1,Clemson,X08
-Bracket_19,R32_X_2,McNeese St,X12
-Bracket_19,R32_X_3,Nebraska,X04
-Bracket_19,R32_X_4,VCU,X11
+Bracket_19,R32_X_2,Vanderbilt,X05
+Bracket_19,R32_X_3,Troy,X13
+Bracket_19,R32_X_4,North Carolina,X06
 Bracket_19,R32_X_5,Illinois,X03
 Bracket_19,R32_X_6,Texas A&M,X10
 Bracket_19,R32_X_7,Houston,X02
-Bracket_19,S16_X_0,Florida,X01
-Bracket_19,S16_X_1,Nebraska,X04
-Bracket_19,S16_X_2,VCU,X11
-Bracket_19,S16_X_3,Houston,X02
-Bracket_19,E8_X_0,Florida,X01
-Bracket_19,E8_X_1,Houston,X02
-Bracket_19,RegFinal_X,Houston,X02
-Bracket_19,FF_Y11,SMU,Y11b
+Bracket_19,S16_X_0,Clemson,X08
+Bracket_19,S16_X_1,Troy,X13
+Bracket_19,S16_X_2,North Carolina,X06
+Bracket_19,S16_X_3,Texas A&M,X10
+Bracket_19,E8_X_0,Clemson,X08
+Bracket_19,E8_X_1,Texas A&M,X10
+Bracket_19,RegFinal_X,Clemson,X08
+Bracket_19,FF_Y11,Miami OH,Y11a
 Bracket_19,R32_Y_0,Michigan,Y01
 Bracket_19,R32_Y_1,Georgia,Y08
-Bracket_19,R32_Y_2,Texas Tech,Y05
+Bracket_19,R32_Y_2,Akron,Y12
 Bracket_19,R32_Y_3,Alabama,Y04
-Bracket_19,R32_Y_4,Tennessee,Y06
+Bracket_19,R32_Y_4,Miami OH,Y11a
 Bracket_19,R32_Y_5,Virginia,Y03
-Bracket_19,R32_Y_6,Santa Clara,Y10
+Bracket_19,R32_Y_6,Kentucky,Y07
 Bracket_19,R32_Y_7,Iowa St,Y02
 Bracket_19,S16_Y_0,Michigan,Y01
 Bracket_19,S16_Y_1,Alabama,Y04
 Bracket_19,S16_Y_2,Virginia,Y03
 Bracket_19,S16_Y_3,Iowa St,Y02
 Bracket_19,E8_Y_0,Michigan,Y01
-Bracket_19,E8_Y_1,Iowa St,Y02
+Bracket_19,E8_Y_1,Virginia,Y03
 Bracket_19,RegFinal_Y,Michigan,Y01
 Bracket_19,R32_Z_0,Arizona,Z01
-Bracket_19,R32_Z_1,Villanova,Z08
+Bracket_19,R32_Z_1,Utah St,Z09
 Bracket_19,R32_Z_2,Wisconsin,Z05
 Bracket_19,R32_Z_3,Arkansas,Z04
 Bracket_19,R32_Z_4,BYU,Z06
 Bracket_19,R32_Z_5,Kennesaw,Z14
-Bracket_19,R32_Z_6,Missouri,Z10
-Bracket_19,R32_Z_7,Queens NC,Z15
+Bracket_19,R32_Z_6,Miami FL,Z07
+Bracket_19,R32_Z_7,Purdue,Z02
 Bracket_19,S16_Z_0,Arizona,Z01
 Bracket_19,S16_Z_1,Arkansas,Z04
-Bracket_19,S16_Z_2,Kennesaw,Z14
-Bracket_19,S16_Z_3,Missouri,Z10
-Bracket_19,E8_Z_0,Arkansas,Z04
-Bracket_19,E8_Z_1,Missouri,Z10
-Bracket_19,RegFinal_Z,Arkansas,Z04
-Bracket_19,F4_WX,Duke,W01
-Bracket_19,F4_YZ,Arkansas,Z04
-Bracket_19,NCG,Arkansas,Z04
-Bracket_19,Champion,Arkansas,Z04
+Bracket_19,S16_Z_2,BYU,Z06
+Bracket_19,S16_Z_3,Purdue,Z02
+Bracket_19,E8_Z_0,Arizona,Z01
+Bracket_19,E8_Z_1,Purdue,Z02
+Bracket_19,RegFinal_Z,Arizona,Z01
+Bracket_19,F4_WX,Clemson,X08
+Bracket_19,F4_YZ,Michigan,Y01
+Bracket_19,NCG,Michigan,Y01
+Bracket_19,Champion,Michigan,Y01
